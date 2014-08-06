@@ -84,6 +84,9 @@ class Board:
 				i = self.instructions[y][x]
 				if i and i[0] == 'S':
 					self.subroutines[y][x] = {'current':[],'output':[]}
+					if self.state[y][x]>=len(boards):
+						print "Tried to load board " + str(self.state[y][x]) + " beyond end of boards"
+						exit(1)
 					self.subroutines[y][x]['current'] = copy.deepcopy(boards[self.state[y][x]])
 	def add_input(self,n):
 		l = len(self.inputs)
@@ -132,6 +135,12 @@ class Board:
 				new_x = None
 				new_y = None
 				# print str(m) + "|" + str(y) + " " + str(x)
+				if self.subroutines[y][x] and self.subroutines[y][x]['output']:
+					o = self.subroutines[y][x]['output'][0].get_output()
+					if o != None:
+						put(y+1,x,o)
+					else:
+						self.subroutines[y][x]['output'].pop(0)
 				if m == None: # no marble
 					continue
 				# print "considering " + print_cell(m) + " at " + str(y) + " " + str(x)
@@ -252,6 +261,8 @@ class Board:
 					if new_x < self.board_w-1:
 						if ins[new_y][new_x+1] and ins[new_y][new_x+1] in stateful_instructions:
 							nst[new_y][new_x+1] = m
+							if ins[new_y][new_x+1][0] == 'S':
+								self.subroutines[new-y][new_x+1]['current'] = copy.deepcopy(boards[m])
 						else:
 							put(new_y,new_x+1,m)
 				if l:
