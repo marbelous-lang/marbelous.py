@@ -259,7 +259,8 @@ class Board:
 						put(new_y+1,new_x,m)
 				if r:
 					if new_x < self.board_w-1:
-						if ins[new_y][new_x+1] and ins[new_y][new_x+1] in stateful_instructions:
+						if ins[new_y][new_x+1] and ins[new_y][new_x+1][0] in stateful_instructions:
+							print "X"
 							nst[new_y][new_x+1] = m
 							if ins[new_y][new_x+1][0] == 'S':
 								self.subroutines[new-y][new_x+1]['current'] = copy.deepcopy(boards[m])
