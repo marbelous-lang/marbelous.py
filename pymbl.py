@@ -10,7 +10,7 @@ if len(sys.argv)<2:
 
 mblfile = sys.argv[1]
 hex_digits = '0123456789ABCDEF'
-stateful_instructions = ['<N','=N','>N','PN','TN','SN','RN','ON']
+stateful_instructions = ['<','=','>','P','T','S','R','O']
 
 def print_cell(x):
 	return '..' if x==None else hex(x)[2:].zfill(2) if type(x) is int else x.ljust(2)
@@ -63,7 +63,7 @@ class Board:
 					mbl[y][x] = int(b,16)
 				else:
 					ins[y][x] = b
-					if b[0] + 'N' in stateful_instructions and b[1] != 'N':
+					if b[0] in stateful_instructions and b[1] != '?':
 						sta[y][x] = int(b[1],36)
 					if b[0] == 'I':
 						self.input_count += 1
@@ -152,35 +152,33 @@ class Board:
 						d = 1
 						m -= 1
 					elif i[0] == '=': # equals state or constant?
-						if i[1] != 'N':
+						if i[1] != '?':
 							s = int(i[1],36)
 						if m == s:
 							r = 1
 						else:
 							d = 1
 					elif i[0] == '>': # greater than state or constant?
-						if i[1] != 'N':
+						if i[1] != '?':
 							s = int(i[1],36)
 						if m > s:
 							r = 1
 						else:
 							d = 1
 					elif i[0] == '<': # less than state or constant?
-						if i[1] != 'N':
+						if i[1] != '?':
 							s = int(i[1],36)
 						if m < s:
 							r = 1
 						else:
 							d = 1
-					elif i[0] == 'R': # random number, 0-static or 0-marble inclusive
-						if i[1] != 'N':
+					elif i[0] == 'R': # random number, 0-static or 0-state inclusive
+						if i[1] != '?':
 							s = int(i[1],36)
-							m = random.randint(0,s)
-						else:
-							m = random.randint(0,m)
+						m = random.randint(0,s)
 						d = 1
 					elif i[0] == 'T': # teleporter
-						if i[1] != 'N':
+						if i[1] != '?':
 							s = int(i[1],36)
 						other_portals = []
 						for k in range(self.board_h):
@@ -230,6 +228,9 @@ class Board:
 							f.populate_outputs()
 							m = f.get_output()
 							self.print_out += f.print_out
+							if m != None:
+								self.subroutines[y][x]['output'].append(f)
+							self.subroutines[y][x]['current'] = copy.deepcopy(boards[self.state[y][x]])
 					elif i[0] == 'O': # output
 						put(y,x,m)
 					elif i[0] == 'X': # exit
@@ -281,7 +282,6 @@ with open(mblfile) as f:
 		else:
 			thisboard.parse(lines)
 			boards.append(thisboard)
-			thisboard.spawn_subroutines()
 			thisboard = Board()
 			lines = []
 	thisboard.parse(lines)
