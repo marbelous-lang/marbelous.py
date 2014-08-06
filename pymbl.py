@@ -201,7 +201,7 @@ class Board:
 							new_y,new_x=random.choice(other_portals)
 							d = 1
 						else:
-							r = 1
+							d = 1
 					elif i[0] == 'P' and m != None: # pause
 						if i[1] != 'N':
 							s = int(i[1],36)
@@ -272,9 +272,10 @@ class Board:
 						put(y,x-1,m)
 		diff = sum([cmp(x,y)!=0 for x,y in zip(self.marbles,nmb)])
 		if diff == 0:
+			print "Exiting board due to lack of activity"
 			return False
 		if exit_now:
-			# print "BAILING OUT!"
+			print "BAILING OUT!"
 			return False
 		self.marbles = nmb
 		self.state = nst
@@ -323,7 +324,7 @@ while board.tick():
 	print "tick: " + str(t)
 	board.display()
 print board.print_out
-if board.output_count:
+if board.output_count or board.exit_count:
 	board.populate_outputs()
 	o = board.get_output()
 	print str(o) + '(' + chr(o) + ') '
