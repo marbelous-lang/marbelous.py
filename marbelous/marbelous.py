@@ -5,12 +5,29 @@ import copy
 import random
 
 if len(sys.argv)<2:
-    print "pymbl.py foo.mbl [I0] [I1] [...]\n"
+    print "Usage: " + str(os.path.basename(__file__)) + " foo.mbl [I0] [I1] [...]\n"
     exit(-1)
 
 mblfile = sys.argv[1]
 hex_digits = '0123456789ABCDEF'
 b36_digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+devices = set([
+    '  ',
+    '..',
+    '\\\\', 
+    '//', 
+    '\\/', 
+    '/\\', 
+    '++', 
+    '--', 
+    'XX', 
+    'R?', 
+    'O<', 
+    'O>', 
+    ])
+for p in ['=','>','<','R','P','S','I','O']:
+    for d in b36_digits:
+        devices.add(p+d)
 
 def print_cell(x):
     return '..' if x==None else hex(x)[2:].upper().zfill(2) if type(x) is int else x.ljust(2)
@@ -45,6 +62,16 @@ class Board:
         board = []
         for line in input:
             row = line.rstrip().split(' ')
+            # support for simple comments
+            # strip everything past the first "#"
+            for i in range(len(row)):
+                if row[i][0] == "#":
+                    row = row[:i]
+                    break
+                if "#" in row[i]:
+                    row[i] = row[i][:row[i].index("#")]
+                    row = row[:i+1]
+                    break
             board.append(row)
             self.board_w = max(self.board_w,len(row))
             self.board_h += 1
@@ -53,20 +80,23 @@ class Board:
         ins = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         for y in range(self.board_h):
             for x in range(self.board_w):
-                b = board[y][x]
+                if x >= len(board[y]):
+                    b = '  '
+                else:
+                    b = board[y][x]
                 # print y, x, b
-                if b == '..' or b == '  ' or b == None:
+                if b == None:
                     continue
                 elif b[0] in hex_digits and b[1] in hex_digits:
                     mbl[y][x] = int(b,16)
                 else:
                     ins[y][x] = b
-                    if b[0] == 'I':
+                    if b[0] == 'I' and b[1] in b36_digits:
                         num = int(b[1],36)
                         if num not in self.inputs:
                             self.inputs[num] = []
                         self.inputs[num].append((y,x))
-                    elif b[0] == 'O':
+                    elif b[0] == 'O' and (b[1] in b36_digits or b[1] == '<' or b[1] == '>'):
                         if b[1] in b36_digits:
                             num = int(b[1],36)
                         elif b[1] == '<':
@@ -83,23 +113,24 @@ class Board:
             self.functionwidth = max(self.functionwidth,max(self.inputs.keys())+1)
         if len(self.outputs) > 0:
             self.functionwidth = max(self.functionwidth,max(self.outputs.keys())+1)
+        if self.name != "MB" and (self.functionwidth*2) % len(self.name) != 0:
+            self.printr("Board name " + str(self.name) + " not a divisor of width " + str(self.functionwidth))
     def find_functions(self):
-        infunc = 0
+        wide_function_names = dict([(b.name * (2 * b.functionwidth / len(b.name)),b.name) for b in boards.values()])
+        name_so_far = ''
         for y in range(self.board_h):
             for x in range(self.board_w):
                 b = self.instructions[y][x]
-                if infunc > 0 and b != self.instructions[y][x-1]:
-                    self.printr("Wrong number of " + str(b) + " on row " + str(y))
-                if b in boards:
-                    if infunc == 0:
-                        self.functions.append((y,x))
-                        infunc = boards[b].functionwidth-1
-                        # print "Starting a block of " + b + " and looking for " + str(infunc) + " more."
-                    else:
-                        infunc -= 1
-        if infunc > 0:
-            self.printr("Wrong number of " + str(b) + " on row " + str(self.board_h-1))
-
+                if name_so_far == '':
+                    if b == None or b in devices or (b[0] in hex_digits and b[1] in hex_digits):
+                        continue
+                name_so_far += b
+                if name_so_far in wide_function_names:
+                    self.functions.append((y,x-(len(name_so_far)-1)/2,wide_function_names[name_so_far]))
+                    name_so_far = ''
+            if name_so_far != '':
+                self.printr("Board " + str(self.name) + " row  " + str(y) + " ends with unexpected cells: " + str (name_so_far))
+                exit(1)
     def populate_input(self,n,m):
         # print n,m
         count = 0
@@ -122,6 +153,7 @@ class Board:
             return None
         if not found:
             return None
+        print n,out
         return out%256
     def tick(self):
         # self.printr(str(self.marbles))
@@ -133,11 +165,11 @@ class Board:
         hidden_activity = False
         # print mbl
         # process each marble
+        def put(y,x,m):
+            # self.printr("put " + str(y) + " " + str(x) + " " + str(m))
+            nmb[y][x] = (m%256) if not nmb[y][x] else (nmb[y][x]+m)%256
         for y in range(self.board_h):
             for x in range(self.board_w):
-                def put(y,x,m):
-                    # self.printr("put " + str(y) + " " + str(x) + " " + str(m))
-                    nmb[y][x] = (m%256) if not nmb[y][x] else (nmb[y][x]+m)%256
                 m = mbl[y][x]
                 i = ins[y][x]
                 l = 0 # move left?
@@ -150,7 +182,9 @@ class Board:
                 if m == None: # no marble
                     continue
                 elif i: # instruction
-                    if i == '\\\\': # divert right
+                    if i == '..' or i == '  ': # fall
+                        d = 1
+                    elif i == '\\\\': # divert right
                         r = 1
                     elif i == '//': # divert left
                         l = 1
@@ -165,23 +199,20 @@ class Board:
                     elif i == '--': # decrement
                         d = 1
                         m -= 1
-                    elif i[0] == '=' and (i[1] in b36_digits or i[1] == '?'): # equals state or constant?
-                        if i[1] != '?':
-                            s = int(i[1],36)
+                    elif i[0] == '=' and i[1] in b36_digits: # equals a constant?
+                        s = int(i[1],36)
                         if m == s:
                             r = 1
                         else:
                             d = 1
-                    elif i[0] == '>' and (i[1] in b36_digits or i[1] == '?'): # greater than state or constant?
-                        if i[1] != '?':
-                            s = int(i[1],36)
+                    elif i[0] == '>' and i[1] in b36_digits: # greater than a constant?
+                        s = int(i[1],36)
                         if m > s:
                             r = 1
                         else:
                             d = 1
-                    elif i[0] == '<' and (i[1] in b36_digits or i[1] == '?'): # less than state or constant?
-                        if i[1] != '?':
-                            s = int(i[1],36)
+                    elif i[0] == '<' and i[1] in b36_digits: # less than a constant?
+                        s = int(i[1],36)
                         if m < s:
                             r = 1
                         else:
@@ -195,6 +226,7 @@ class Board:
                         d = 1
                     elif i[0] == 'P' and i[1] in b36_digits: # portal
                         s = int(i[1],36)
+                        # print "portal " + str(s) + " at " + str(y) + " " + str(x) + "?"
                         other_portals = []
                         for k in range(self.board_h):
                             for j in range(self.board_w):
@@ -204,6 +236,7 @@ class Board:
                                     ins[k][j][1] == i[1]:
                                     other_portals.append((k,j))
                         if other_portals:
+                            # print other_portals
                             new_y,new_x=random.choice(other_portals)
                             d = 1
                         else:
@@ -231,12 +264,12 @@ class Board:
                                 # print "unpause!"
                     elif i[0] == 'O' and (i[1] in b36_digits or i[1] == '<' or i[1] == '>'): # output
                         put(y,x,m)
+                    elif i[0] == 'I' and i[1] in b36_digits: # input == fall
+                        d = 1
                     elif i == 'XX': # exit
                         exit_now = True
-                    elif i in boards:
-                        pass
                     else: # unrecognized instruction or Input
-                        d = 1
+                        pass # default to trash!
                 else: # no instruction
                     d = 1
                 new_y = new_y if new_y!=None else y
@@ -256,7 +289,7 @@ class Board:
                         put(new_y,new_x-1,m)
         for c in self.functions:
             run = True
-            g = boards[ins[c[0]][c[1]]]
+            g = boards[c[2]]
             for i in g.inputs:
                 if mbl[c[0]][c[1]+i] == None:
                     run = False
@@ -276,9 +309,10 @@ class Board:
                 for o in sorted(f.outputs.keys()):
                     if o < 0:
                         continue
-                    if f.get_output(o) != None:
+                    t = f.get_output(o)
+                    if t != None:
                         if c[0] < self.board_h-1:
-                            put(c[0]+1,c[1]+o,f.get_output(o))
+                            put(c[0]+1,c[1]+o,t)
                             # print "put " + str(f.get_output(o))
                         else:
                             self.print_out += "0x" + hex(m)[2:].zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
@@ -322,16 +356,15 @@ with open(mblfile) as f:
     for line in f.readlines():
         if line[0] == '#': # comment
             pass
-        else:
-            if len(line.rstrip()) == 3 and line[2] == ':': # start of new named board
-                thisboard.parse(lines)
-                thisboard = Board()
-                boardname = line[0:2]
-                boards[boardname]=thisboard
-                thisboard.name = boardname
-                lines = []
-            else:
-                lines.append(line)
+        elif line[0] == ':': # start of new named board
+            thisboard.parse(lines)
+            thisboard = Board()
+            boardname = line[1:].rstrip()
+            boards[boardname]=thisboard
+            thisboard.name = boardname
+            lines = []
+        else: # another line in the current board
+            lines.append(line)
     thisboard.parse(lines)
 
 # can't process function devices before all the functions in the file are loaded

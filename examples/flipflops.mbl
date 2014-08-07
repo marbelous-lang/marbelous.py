@@ -1,0 +1,44 @@
+# toggling flip flops, down/left and down/right
+# requires one tick gap between inputs
+.. .. 99 .. .. 88 .. ..
+.. .. .. .. .. .. .. ..
+.. .. 99 .. .. 88 .. ..
+.. .. .. .. .. .. .. ..
+.. .. 99 .. .. 88 .. ..
+.. .. .. .. .. .. .. ..
+.. .. 99 .. .. 88 .. ..
+.. 00 .. .. .. .. 00 ..
+\\ Rf lp .. .. Lf lp //
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. ..
+:Rflp
+# alternately sends I1 to O1 or O>
+# requires one tick gap between inputs
+# I0 goes out O< and expects to encounter a \\
+# I0 must be primed with a marble
+.. I0 .. .. ..
+Nt /\ \\ =0 S1
+O< I1 .. S0 ..
+S0 /\ S1 XX //
+O1 .. O> .. ..
+:Lflp
+# alternately sends I0 to O0 or O<
+# requires one tick gap between inputs
+# I1 goes out O> and expects to encounter a //
+# I1 must be primed with a marble
+.. I1 .. .. ..
+Nt /\ \\ =0 S1
+O> I0 .. S0 ..
+S0 /\ S1 XX //
+O0 .. O< .. ..
+:Nt
+# O0 = (I0==0)
+I0 ..
+>0 R0
+++ O0
+O0 ..

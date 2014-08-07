@@ -1,0 +1,16 @@
+I0 I1
+Su bt
+O0 ..
+:Subt
+# O0 = I0 - I1
+# implemented as O0 = I0 + I1 * 255
+.. I1 FF
+I0 Mu lt
+\\ O0 ..
+:Mult
+# see multiplier.mbl for explanation
+I0 P0 .. P1 I1 ..
+\\ >0 S0 \\ S0 ..
+.. S1 -- 00 /\ P1
+.. \/ P0 S1 .. ..
+.. .. .. O0 .. ..

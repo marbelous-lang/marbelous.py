@@ -1,0 +1,10 @@
+# calculates the nth fibonacci number, recursively
+.. I0 .. ..
+.. =0 O0 .. # if I0==0 then return 0
+.. /\ -- .. # duplicate I0, right copy is decremented
+.. .. =0 ++ # if I0-1==0 then increment it (then return it, being 1)
+\\ .. \/ O0 # move the falling I0 over, trash the decremented copy
+-- /\ -- .. # duplicate I0 again, decrement both copies
+MB .. -- .. # recursively call this board with I0-1, decement the other copy
+\\ .. MB .. # recursively call this board with I0-2
+.. O0 // .. # results of recursive calls are added together and returned

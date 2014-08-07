@@ -1,0 +1,8 @@
+# prints "Y\n" to stdout repeatedly
+# functions with zero inputs are processed every tick
+Ye sx
+.. ..
+:Yesx
+# output "Y" and "\n"
+79 0A
+O0 O1

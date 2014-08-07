@@ -1,0 +1,11 @@
+I0 I1
+Mu lt
+.. ..
+:Mult
+# O0 = I0 * I1
+# loops I0 times, adding I1 to itself
+I0 P0 .. P1 I1 .. # two inputs, tops of both portal loops
+\\ >0 S0 \\ S0 .. # if I0>0, release I1 from S0
+.. S1 -- 00 /\ P1 # if I0=0, release the result from S1. duplicate I1, one copy to the aggregtor, one back to the top
+.. \/ P0 S1 .. .. # trash I0, or loop decremented I0, and S1 where the aggregator lives
+.. .. .. O0 .. .. # output the aggregator

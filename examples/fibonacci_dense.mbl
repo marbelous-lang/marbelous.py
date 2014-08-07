@@ -1,0 +1,7 @@
+# calculates the nth fibonacci number, recursively
+I0 I0 I0 .. # three copies of I0, call them A B C
+-- S0 =0 O0 # decrement A, hold B for sync, return C if it's 0
+S0 -- -- .. # hold A for sync, decrement B, decrement C
+-- MB =0 ++ # decrement A, recurse with B, increment (then return) C if it's 0
+MB .. S0 O0 # recurse with A, do nothing with B, release the sync if C made it this far
+\\ O0 \/ .. # add A to B and return it, trash C
