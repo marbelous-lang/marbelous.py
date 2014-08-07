@@ -89,7 +89,7 @@ class Board:
             for x in range(self.board_w):
                 b = self.instructions[y][x]
                 if infunc > 0 and b != self.instructions[y][x-1]:
-                    self.printr("Wrong number of " + b + " on row " + str(y))
+                    self.printr("Wrong number of " + str(b) + " on row " + str(y))
                 if b in boards:
                     if infunc == 0:
                         self.functions.append((y,x))
@@ -110,11 +110,17 @@ class Board:
         return count
     def get_output(self,n):
         out = 0
+        found = False
         if n in self.outputs and self.outputs[n]:
+            # print self.outputs[n]
             for y,x in self.outputs[n]:
                 if self.marbles[y][x] != None:
+                    # print self.marbles[y][x]
                     out += self.marbles[y][x]
+                    found = True
         else:
+            return None
+        if not found:
             return None
         return out%256
     def tick(self):
@@ -155,7 +161,7 @@ class Board:
                         pass
                     elif i == '++': # increment
                         d = 1
-                        m = m
+                        m += 1
                     elif i == '--': # decrement
                         d = 1
                         m -= 1
@@ -223,7 +229,7 @@ class Board:
                                 d = 1
                             # else:
                                 # print "unpause!"
-                    elif i[0] == 'O' and i[1] in b36_digits: # output
+                    elif i[0] == 'O' and (i[1] in b36_digits or i[1] == '<' or i[1] == '>'): # output
                         put(y,x,m)
                     elif i == 'XX': # exit
                         exit_now = True
@@ -238,7 +244,7 @@ class Board:
                 # self.printr(str((y,x,d,r,l)))
                 if d:
                     if new_y==self.board_h-1:
-                        self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 32 else '?') + ') '
+                        self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
                         hidden_activity = True
                     else:
                         put(new_y+1,new_x,m)
@@ -275,7 +281,7 @@ class Board:
                             put(c[0]+1,c[1]+o,f.get_output(o))
                             # print "put " + str(f.get_output(o))
                         else:
-                            self.print_out += hex(m)[2:].zfill(2) + '(' + (chr(m) if m > 32 else '?') + ') '
+                            self.print_out += "0x" + hex(m)[2:].zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
                             hidden_activity = True
             else:
                 for i in range(g.functionwidth):
@@ -314,15 +320,18 @@ with open(mblfile) as f:
     thisboard.name = boardname
     lines = []
     for line in f.readlines():
-        if len(line.rstrip()) == 3 and line[2] == ':':
-            thisboard.parse(lines)
-            thisboard = Board()
-            boardname = line[0:2]
-            boards[boardname]=thisboard
-            thisboard.name = boardname
-            lines = []
+        if line[0] == '#': # comment
+            pass
         else:
-            lines.append(line)
+            if len(line.rstrip()) == 3 and line[2] == ':': # start of new named board
+                thisboard.parse(lines)
+                thisboard = Board()
+                boardname = line[0:2]
+                boards[boardname]=thisboard
+                thisboard.name = boardname
+                lines = []
+            else:
+                lines.append(line)
     thisboard.parse(lines)
 
 # can't process function devices before all the functions in the file are loaded
@@ -344,10 +353,10 @@ board.display()
 while board.tick() and board.tick_count < 1000:
     board.display()
 
-print board.print_out
+print "STDOUT: " + board.print_out
 
 if len(board.outputs):
     for n in board.outputs:
         if board.outputs[n]:
             o = board.get_output(n)
-            print str(o) + '(' + chr(o) + ') '
+            print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
