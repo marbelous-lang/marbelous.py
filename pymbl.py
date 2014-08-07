@@ -33,7 +33,7 @@ class Board:
     def printr(self,s):
         print ' ' * self.recursiondepth + str(s)
     def display(self):
-        self.printr("tick: " + str(self.tick_count))
+        self.printr(self.name + " tick: " + str(self.tick_count))
         for y in range(self.board_h):
             line = ''
             for x in range(self.board_w):
@@ -54,6 +54,7 @@ class Board:
         for y in range(self.board_h):
             for x in range(self.board_w):
                 b = board[y][x]
+                # print y, x, b
                 if b == '..' or b == '  ' or b == None:
                     continue
                 elif b[0] in hex_digits and b[1] in hex_digits:
@@ -117,6 +118,7 @@ class Board:
             return None
         return out%256
     def tick(self):
+        # self.printr(str(self.marbles))
         mbl = self.marbles
         ins = self.instructions
         # new marble array
@@ -128,7 +130,8 @@ class Board:
         for y in range(self.board_h):
             for x in range(self.board_w):
                 def put(y,x,m):
-                    nmb[y][x] = m if not nmb[y][x] else (nmb[y][x]+m)%256
+                    # self.printr("put " + str(y) + " " + str(x) + " " + str(m))
+                    nmb[y][x] = (m%256) if not nmb[y][x] else (nmb[y][x]+m)%256
                 m = mbl[y][x]
                 i = ins[y][x]
                 l = 0 # move left?
@@ -152,39 +155,39 @@ class Board:
                         pass
                     elif i == '++': # increment
                         d = 1
-                        m += 1
+                        m = m
                     elif i == '--': # decrement
                         d = 1
                         m -= 1
-                    elif i[0] == '=': # equals state or constant?
+                    elif i[0] == '=' and (i[1] in b36_digits or i[1] == '?'): # equals state or constant?
                         if i[1] != '?':
                             s = int(i[1],36)
                         if m == s:
                             r = 1
                         else:
                             d = 1
-                    elif i[0] == '>': # greater than state or constant?
+                    elif i[0] == '>' and (i[1] in b36_digits or i[1] == '?'): # greater than state or constant?
                         if i[1] != '?':
                             s = int(i[1],36)
                         if m > s:
                             r = 1
                         else:
                             d = 1
-                    elif i[0] == '<': # less than state or constant?
+                    elif i[0] == '<' and (i[1] in b36_digits or i[1] == '?'): # less than state or constant?
                         if i[1] != '?':
                             s = int(i[1],36)
                         if m < s:
                             r = 1
                         else:
                             d = 1
-                    elif i[0] == 'R': # random number, 0-static or 0-marble
+                    elif i[0] == 'R' and (i[1] in b36_digits or i[1] == '?'): # random number, 0-static or 0-marble
                         if i[1] != '?':
                             s = int(i[1],36)
                         else :
                             s = m
                         m = random.randint(0,s)
                         d = 1
-                    elif i[0] == 'P': # portal
+                    elif i[0] == 'P' and i[1] in b36_digits: # portal
                         s = int(i[1],36)
                         other_portals = []
                         for k in range(self.board_h):
@@ -199,7 +202,7 @@ class Board:
                             d = 1
                         else:
                             d = 1
-                    elif i[0] == 'S': # synchronize
+                    elif i[0] == 'S' and i[1] in b36_digits: # synchronize
                         if m != None:
                             s = int(i[1],36)
                             # print "sync " + str(s) + " at " + str(y) + " " + str(x) + "?"
@@ -220,7 +223,7 @@ class Board:
                                 d = 1
                             # else:
                                 # print "unpause!"
-                    elif i[0] == 'O': # output
+                    elif i[0] == 'O' and i[1] in b36_digits: # output
                         put(y,x,m)
                     elif i == 'XX': # exit
                         exit_now = True
@@ -232,6 +235,7 @@ class Board:
                     d = 1
                 new_y = new_y if new_y!=None else y
                 new_x = new_x if new_x!=None else x
+                # self.printr(str((y,x,d,r,l)))
                 if d:
                     if new_y==self.board_h-1:
                         self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 32 else '?') + ') '
@@ -273,6 +277,10 @@ class Board:
                         else:
                             self.print_out += hex(m)[2:].zfill(2) + '(' + (chr(m) if m > 32 else '?') + ') '
                             hidden_activity = True
+            else:
+                for i in range(g.functionwidth):
+                    if mbl[c[0]][c[1]+i] != None:
+                        put(c[0],c[1]+i,mbl[c[0]][c[1]+i])
         self.tick_count += 1
         diff = sum([cmp(x,y)!=0 for x,y in zip(self.marbles,nmb)])
         if diff == 0 and hidden_activity == False:
@@ -303,6 +311,7 @@ with open(mblfile) as f:
     thisboard = Board()
     boardname = "MB"
     boards[boardname]=thisboard
+    thisboard.name = boardname
     lines = []
     for line in f.readlines():
         if len(line.rstrip()) == 3 and line[2] == ':':
@@ -310,6 +319,7 @@ with open(mblfile) as f:
             thisboard = Board()
             boardname = line[0:2]
             boards[boardname]=thisboard
+            thisboard.name = boardname
             lines = []
         else:
             lines.append(line)
@@ -331,7 +341,7 @@ for i in range(2,len(sys.argv)):
 
 board.display()
 
-while board.tick() and board.tick_count < 100:
+while board.tick() and board.tick_count < 1000:
     board.display()
 
 print board.print_out
