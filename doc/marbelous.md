@@ -31,6 +31,9 @@ Devices
 * `//` are deflectors which displace any marble one cell to the right or left, respectively.
 * `++` increments the marble on it and lets it fall through
 * `--` decrements the marble on it and lets it fall through
+* `>>` shifts bits right (divide by two)
+* `<<` shifts bits left (multiply by two)
+* `!!` invert bits (logical not)
 * `=n` sends marbles equal to n to the right, others down
 * `>n` sends marbles greater than to n to the right, others down
 * `<n` sends marbles less than to n to the right, others down
@@ -38,8 +41,8 @@ Devices
 * `Sn` is a synchroniser, which stalls a marble until there is a marble on every synchroniser with the same n, when they all fall through
 * `Rn` generates a random marble 0-n
 * `R?` generates a random marble 0 through the value of the input marble
-* `XX` return from the current board
-* `In` will contain the n-th input when a function is invoked. Duplicates of the same n are allowed.
+* `XX` return from the current board immediately
+* `In` will contain the n-th input when a function is invoked. Duplicates of the same `In` result in duplicated input values.
 * `On` act like a group of synchronisers to collect the outputs. The function terminates when all outputs are filled with a marble (or the termination device, `XX`, is used). Each On may be used multiple times, and only one of each n needs to be filled for the function to terminate. If multiple cells are filled, the marbles will be added to give the output.
 * `O<` and
 * `O>` are additional outputs which appear to the sides of the subroutine device. If present, these need to be filled too, for the subroutine to terminate. They have no effect on the main board.

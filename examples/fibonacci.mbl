@@ -1,9 +1,12 @@
 # calculates the nth fibonacci number, recursively
+I0
+Fb
+:Fb
 .. I0 .. ..
 .. <2 O0 .. # if I0<2 then return it
 .. /\ <5 -- # duplicate I0, if the right copy is <5 then divert and decrement it
 \\ .. \/ O0 # move the left copy over, trash or return the right copy
 -- /\ -- .. # duplicate I0 again, decrement both copies
-MB .. -- .. # recursively call this board with I0-1, decement the other copy
-\\ .. MB .. # recursively call this board with I0-2
+Fb .. -- .. # recursively call this board with I0-1, decement the other copy
+\\ .. Fb .. # recursively call this board with I0-2
 .. O0 // .. # results of recursive calls are added together and returned

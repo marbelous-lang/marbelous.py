@@ -24,6 +24,9 @@ devices = set([
     'R?',
     'O<',
     'O>',
+    '<<',
+    '>>',
+    '!!'
     ])
 for p in '=><RPSIO':
     for d in b36_digits:
@@ -51,7 +54,7 @@ class Board:
         self.name = ''
 
     def printr(self, s):
-        print ' ' * self.recursiondepth + str(s)
+        if __debug__: print ' ' * self.recursiondepth + str(s)
 
     def display(self):
         self.printr(self.name + " tick: " + str(self.tick_count))
@@ -66,7 +69,14 @@ class Board:
     def parse(self, input):
         board = []
         for line in input:
-            row = line.rstrip().split(' ')
+            line = line.rstrip()
+            if len(line) < 3 or line[2] != ' ': # split every 2 characters
+                row = [line[i:i+2] for i in range(0, len(line), 2)]
+            else:
+                if line[3] != ' ': # split on one space
+                    row = line.split(' ')
+                else: # split on two spaces
+                    row = line.split('  ')
             # support for simple comments
             # strip everything past the first "#"
             for i in range(len(row)):
@@ -161,11 +171,24 @@ class Board:
             return None
         if not found:
             return None
-        print n, out
         return out % 256
 
     def tick(self):
         # self.printr(str(self.marbles))
+        if len(self.outputs):
+            outputs_filled = True
+            for o in self.outputs.values():
+                this_output_filled = False
+                for c in o:
+                    if self.marbles[c[0]][c[1]] is not None:
+                        this_output_filled = True
+                        break
+                if this_output_filled == False:
+                    outputs_filled = False
+                    break
+            if outputs_filled:
+                self.printr("Exiting board due to filled O instructions")
+                return False
         mbl = self.marbles
         ins = self.instructions
         # new marble array
@@ -208,6 +231,15 @@ class Board:
                     elif i == '--':  # decrement
                         d = 1
                         m -= 1
+                    elif i == '<<': # shift left
+                        d = 1
+                        m = m << 1
+                    elif i == '>>': # shift right
+                        d = 1
+                        m = m >> 1
+                    elif i == '!!': # invert bits / logical not
+                        d = 1
+                        m = ~m
                     elif i[0] == '=' and i[1] in b36_digits:  # equals a constant?
                         s = int(i[1], 36)
                         if m == s:
@@ -276,6 +308,7 @@ class Board:
                     elif i[0] == 'I' and i[1] in b36_digits:  # input == fall
                         d = 1
                     elif i == 'XX':  # exit
+                        # print "exit now!"
                         exit_now = True
                     else:  # unrecognized instruction or Input
                         pass  # default to trash!
@@ -286,7 +319,10 @@ class Board:
                 # self.printr(str((y,x,d,r,l)))
                 if d:
                     if new_y == self.board_h-1:
-                        self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
+                        if __debug__:
+                            self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
+                        else:
+                            sys.stdout.write(chr(m))
                         hidden_activity = True
                     else:
                         put(new_y+1, new_x, m)
@@ -302,6 +338,7 @@ class Board:
             for i in g.inputs:
                 if mbl[c[0]][c[1]+i] is None:
                     run = False
+                    break
             if run:
                 f = copy.deepcopy(g)
                 f.recursiondepth = self.recursiondepth+1
@@ -319,12 +356,15 @@ class Board:
                     if o < 0:
                         continue
                     t = f.get_output(o)
-                    if t is not None:
+                    if t != None:
                         if c[0] < self.board_h-1:
                             put(c[0]+1, c[1]+o, t)
                             # print "put " + str(f.get_output(o))
                         else:
-                            self.print_out += "0x" + hex(m)[2:].zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
+                            if __debug__:
+                                self.print_out += "0x" + hex(t)[2:].zfill(2) + '(' + (chr(t) if t > 31 else '?') + ') '
+                            else:
+                                sys.stdout.write(chr(t))
                             hidden_activity = True
             else:
                 for i in range(g.functionwidth):
@@ -335,22 +375,10 @@ class Board:
         if diff == 0 and hidden_activity is False:
             self.printr("Exiting board due to lack of activity")
             return False
-        self.marbles = nmb
-        if len(self.outputs):
-            outputs_filled = True
-            for o in self.outputs.values():
-                this_output_filled = False
-                for c in o:
-                    if nmb[c[0]][c[1]] is not None:
-                        this_output_filled = True
-                if this_output_filled is False:
-                    outputs_filled = False
-            if outputs_filled:
-                self.printr("Exiting board due to filled O instructions")
-                return False
         if exit_now:
             self.printr("Exiting board due to filled X instruction")
             return False
+        self.marbles = nmb
         return True
 
 # the boards array contains pristine instances of boards from the source
@@ -392,13 +420,14 @@ for i in range(2, len(sys.argv)):
 
 board.display()
 
-while board.tick() and board.tick_count < 1000:
+while board.tick():# and board.tick_count < 10000:
+    # sys.stderr.write(str(board.tick_count) + "\n")
     board.display()
 
-print "STDOUT: " + board.print_out
+if __debug__: print "STDOUT: " + board.print_out
 
 if len(board.outputs):
     for n in board.outputs:
         if board.outputs[n]:
             o = board.get_output(n)
-            print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
+            if __debug__: print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
