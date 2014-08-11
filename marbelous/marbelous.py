@@ -220,9 +220,11 @@ class Board:
                         put_immediate(y, x+board.function_width, value)
                     else:
                         if y == self.board_h-1:
-                            if options['verbose'] > 0:
+                            if options['verbose'] > 0 or options['stderr']:
                                 self.print_out += chr(value)
-                            else:
+                                self.printr("STDOUT: " + "0x" + hex(value)[2:].upper().zfill(2) + \
+                                            '/"' + (chr(value) if value > 31 else '?') + '"')
+                            if options['verbose'] == 0 or options['stderr']:
                                 sys.stdout.write(chr(value))
                         else:
                             put_immediate(y+1, x+int(location), value)
@@ -360,9 +362,11 @@ class Board:
                 new_x = new_x if new_x is not None else x
                 if d:
                     if new_y == self.board_h-1:
-                        if options['verbose'] > 0:
+                        if options['verbose'] > 0 or options['stderr']:
                             self.print_out += chr(m)
-                        else:
+                            self.printr("STDOUT: " + "0x" + hex(m)[2:].upper().zfill(2) + \
+                                        '/"' + (chr(m) if m > 31 else '?') + '"')
+                        if options['verbose'] == 0 or options['stderr']:
                             sys.stdout.write(chr(m))
                         hidden_activity = True
                     else:
@@ -468,9 +472,9 @@ while board.tick():# and board.tick_count < 10000:
         board.display_tick()
 
 if options['verbose'] > 0:
-    print "STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
+    board.printr("STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
                 '/"' + (v if ord(v) > 31 else '?') + '"' \
-                for v in board.print_out])
+                for v in board.print_out]))
 
 outputs = board.get_output_values()
 if options['verbose'] > 0:
