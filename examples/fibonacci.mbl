@@ -1,12 +1,60 @@
-# calculates the nth fibonacci number, recursively
-I0
-Fb
+# calculates the nth fibonacci number, recursively.
+.. 0A
+I0 ..
+Fb ..
+Dp ..
+
 :Fb
-.. I0 .. ..
-.. <2 O0 .. # if I0<2 then return it
-.. /\ <5 -- # duplicate I0, if the right copy is <5 then divert and decrement it
-\\ .. \/ O0 # move the left copy over, trash or return the right copy
--- /\ -- .. # duplicate I0 again, decrement both copies
-Fb .. -- .. # recursively call this board with I0-1, decement the other copy
-\\ .. Fb .. # recursively call this board with I0-2
-.. O0 // .. # results of recursive calls are added together and returned
+I0 I0 I0 .. # three copies of I0, call them A B C
+-- S0 <2 O0 # decrement A, hold B for sync, return C if it's <2
+S0 -- <5 -- # hold A for sync, decrement B, divert and decrement C if it's <5
+-- Fb S0 O0 # decrement A, recurse with B, release sync or return C-1
+Fb .. \/ .. # recurse with A, do nothing with B, trash C
+\\ O0 .. .. # add A to B and return it
+
+# prints one marble as three decimal digits
+:Dp
+I0 .. ..
+De co ut
++O +O +O
++O +O +O
+
+# returns three decimal digits representing one input marble
+:Decout
+I0 I0 I0
+/A /A %A
+/A %A ..
+O0 O1 O2
+
+# divide by ten
+:/A
+.. I0 .. I0 ..
+.. >> I0 .. ..
+.. >> >> \\ ..
+.. .. // .. //
+.. /\ >> \\ ..
+.. .. >> .. //
+.. .. >> \\ ..
+.. .. >> .. ..
+\\ >> // .. ..
+.. >> .. .. ..
+.. >> .. .. ..
+.. /\ .. .. ..
+.. .. /\ << ..
+.. .. .. << ..
+.. \\ << // ..
+.. .. !! .. ..
+.. .. ++ .. ..
+.. .. \\ .. //
+\\ .. .. <A \/
+.. \\ .. R0 ..
+.. .. .. ++ ..
+.. .. \\ .. ..
+.. .. .. O0 ..
+
+# modulo ten
+:%A
+P0 ..
+I0 ..
+>9 -A
+O0 P0

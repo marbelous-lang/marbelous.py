@@ -14,7 +14,6 @@ parser.add_argument('board', metavar='board.mbl',
                     help='filename for the main board')
 parser.add_argument('inputs', metavar='input', nargs='*', 
                     help='inputs for the main board')
-# add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])
 parser.add_argument('-r', '--return', dest='return', action='store_true',
                     help='main board O0 as process return code')
 parser.add_argument('-v', '--verbose', dest='verbose', action='count', default=0,
@@ -56,19 +55,30 @@ class Board:
         # hash of (inputnumber):[(x,y),(x,y)...]
         self.inputs = {}
         self.outputs = {}
-        self.functionwidth = 1
+        self.function_width = 1
         self.board_h = 0
         self.board_w = 0
         self.marbles = []
         self.instructions = []
         self.functions = []
         self.print_out = ''
-        self.recursiondepth = 0
+        self.recursion_depth = 0
         self.tick_count = 0
         self.name = ''
+        self.board_queue = []
+
+    def __repr__(self):
+        return "Board name=" + self.name + " tick=" + str(self.tick_count)
 
     def printr(self, s):
-        verbose_stream.write( (' ' * self.recursiondepth + str(s)) + '\n')
+        verbose_stream.write( (' ' * self.recursion_depth + str(s)) + '\n')
+
+    def display_tick(self):
+        if self.board_queue:
+            board, coordinates = self.board_queue[-1]
+            board.display_tick()
+        else:
+            self.display()
 
     def display(self):
         self.printr(':' + self.name + " tick " + str(self.tick_count))
@@ -133,17 +143,17 @@ class Board:
                         self.outputs[num].append((y, x))
         self.marbles = mbl
         self.instructions = ins
-        self.functionwidth = 1
+        self.function_width = 1
         if len(self.inputs) > 0:
-            self.functionwidth = max(self.functionwidth, max(self.inputs.keys())+1)
+            self.function_width = max(self.function_width, max(self.inputs.keys())+1)
         if len(self.outputs) > 0:
-            self.functionwidth = max(self.functionwidth, max(self.outputs.keys())+1)
-        if self.name != "MB" and (self.functionwidth*2) % len(self.name) != 0:
-            sys.stderr.write("Board name " + str(self.name) + " not a divisor of width " + str(self.functionwidth) + '\n')
+            self.function_width = max(self.function_width, max(self.outputs.keys())+1)
+        if self.name != "MB" and (self.function_width*2) % len(self.name) != 0:
+            sys.stderr.write("Board name " + str(self.name) + " not a divisor of width " + str(self.function_width) + '\n')
             exit(1)
 
     def find_functions(self):
-        wide_function_names = dict([(b.name * (2 * b.functionwidth / len(b.name)), b.name) for b in boards.values()])
+        wide_function_names = dict([(b.name * (2 * b.function_width / len(b.name)), b.name) for b in boards.values()])
         name_so_far = ''
         for y in range(self.board_h):
             for x in range(self.board_w):
@@ -159,53 +169,81 @@ class Board:
                 sys.stderr.write("Board " + str(self.name) + " row  " + str(y) + " ends with unexpected cells: " + str(name_so_far) + "\n")
                 exit(1)
 
-    def populate_input(self, n, m):
-        count = 0
-        if self.inputs[n]:
-            for y, x in self.inputs[n]:
-                self.marbles[y][x] = m
-                count += 1
-        return count
+    def populate_inputs(self, inputs):
+        for input_num,value in inputs.iteritems():
+            if value is not None:
+                for y, x in self.inputs[input_num]:
+                    self.marbles[y][x] = value
 
-    def get_output(self, n):
-        out = 0
-        found = False
-        if n in self.outputs and self.outputs[n]:
-            for y, x in self.outputs[n]:
+    def get_output_values(self):
+        outputs = {}
+        for output_num, coordinates in self.outputs.items():
+            for y, x in coordinates:
                 if self.marbles[y][x] is not None:
-                    out += self.marbles[y][x]
-                    found = True
-        else:
-            return None
-        if not found:
-            return None
-        return out % 256
+                    if output_num not in outputs:
+                        outputs[output_num] = self.marbles[y][x]
+                    else:
+                        outputs[output_num] += self.marbles[y][x]
+        return outputs
+
+    def all_outputs_filled(self):
+        if not self.outputs:
+            return False
+        for output_set in self.outputs.values():
+            output_filled = False
+            for y, x in output_set:
+                if self.marbles[y][x] is not None:
+                    output_filled = True
+                    break
+            if not output_filled:
+                return False
+        return True
 
     def tick(self):
-        if len(self.outputs):
-            outputs_filled = True
-            for o in self.outputs.values():
-                this_output_filled = False
-                for c in o:
-                    if self.marbles[c[0]][c[1]] is not None:
-                        this_output_filled = True
-                        break
-                if this_output_filled == False:
-                    outputs_filled = False
-                    break
-            if outputs_filled:
-                if options['verbose'] > 0:
-                    self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled O instructions")
-                return False
+        if self.all_outputs_filled() and not self.board_queue:
+            if options['verbose'] > 1:
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled O instructions")
+            return False
+
         mbl = self.marbles
+        def put_immediate(y, x, m):
+            mbl[y][x] = (m % 256) if not mbl[y][x] else (mbl[y][x]+m) % 256
+        if self.board_queue:
+            #TODO: use a deque so we can run functions in "correct" order
+            board, coordinates = self.board_queue[-1]
+            y, x = coordinates
+            if not board.tick():
+                for location, value in board.get_output_values().items():
+                    if location == -1:
+                        put_immediate(y, x-1, value)
+                    elif location == -2:
+                        put_immediate(y, x+board.function_width, value)
+                    else:
+                        if y == self.board_h-1:
+                            if options['verbose'] > 0:
+                                self.print_out += chr(value)
+                            else:
+                                sys.stdout.write(chr(value))
+                        else:
+                            put_immediate(y+1, x+int(location), value)
+                self.board_queue.pop()
+                self.print_out += board.print_out
+                if options['verbose'] > 2:
+                    board.display()
+            return True
+
+        self.tick_count += 1
         ins = self.instructions
         # new marble array
         nmb = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         exit_now = False
         hidden_activity = False
-        # process each marble
+
         def put(y, x, m):
             nmb[y][x] = (m % 256) if not nmb[y][x] else (nmb[y][x]+m) % 256
+
+        #TODO: queue print_out and sort it correctly with function print_out
+        # process each marble
         for y in range(self.board_h):
             for x in range(self.board_w):
                 m = mbl[y][x]
@@ -323,7 +361,7 @@ class Board:
                 if d:
                     if new_y == self.board_h-1:
                         if options['verbose'] > 0:
-                            self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
+                            self.print_out += chr(m)
                         else:
                             sys.stdout.write(chr(m))
                         hidden_activity = True
@@ -335,55 +373,35 @@ class Board:
                 if l:
                     if new_x > 0:
                         put(new_y, new_x-1, m)
-        for c in self.functions:
+
+        for y, x, name in self.functions:
             run = True
-            g = boards[c[2]]
-            for i in g.inputs:
-                if mbl[c[0]][c[1]+i] is None:
+            sub_board = boards[name]
+            for i in sub_board.inputs:
+                if self.marbles[y][x+i] is None:
                     run = False
                     break
             if run:
-                f = copy.deepcopy(g)
-                f.recursiondepth = self.recursiondepth+1
-                for i in g.inputs:
-                    f.populate_input(i, mbl[c[0]][c[1]+i])
-                if options['verbose'] > 1:
-                    f.display()
-                while f.tick():
-                    if options['verbose'] > 1:
-                        f.display()
-                self.print_out += f.print_out
-                if f.get_output(-1) is not None and c[1] > 0:
-                    put(c[0], c[1]-1, f.get_output(-1))
-                if f.get_output(-2) is not None and c[1]+f.functionwidth < self.board_w:
-                    put(c[0], c[1]+f.functionwidth, f.get_output(-2))
-                for o in sorted(f.outputs.keys()):
-                    if o < 0:
-                        continue
-                    t = f.get_output(o)
-                    if t != None:
-                        if c[0] < self.board_h-1:
-                            put(c[0]+1, c[1]+o, t)
-                        else:
-                            if options['verbose'] > 0:
-                                self.print_out += hex(t)[2:].upper().zfill(2) + '(' + (chr(t) if t > 31 else '?') + ') '
-                            else:
-                                sys.stdout.write(chr(t))
-                            hidden_activity = True
+                self.board_queue.append((copy.deepcopy(sub_board), (y, x)))
+                inputs = {}
+                for i in range(sub_board.function_width):
+                    inputs[i] = self.marbles[y][x+i]
+                self.board_queue[-1][0].populate_inputs(inputs)
+                self.board_queue[-1][0].recursion_depth = self.recursion_depth+1
             else:
-                for i in range(g.functionwidth):
-                    if mbl[c[0]][c[1]+i] is not None:
-                        put(c[0], c[1]+i, mbl[c[0]][c[1]+i])
+                for i in range(sub_board.function_width):
+                    if self.marbles[y][x+i] is not None:
+                        put(y, x+i, self.marbles[y][x+i])
+
         diff = sum([cmp(x, y) != 0 for x, y in zip(self.marbles, nmb)])
         if diff == 0 and hidden_activity is False:
-            if options['verbose'] > 0:
+            if options['verbose'] > 1:
                 self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to lack of activity")
             return False
         if exit_now:
-            if options['verbose'] > 0:
+            if options['verbose'] > 1:
                 self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled X instructions")
             return False
-        self.tick_count += 1
         self.marbles = nmb
         return True
 
@@ -421,28 +439,34 @@ if len(options['inputs']) != len(board.inputs):
     sys.stderr.write(options['board'] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(options['inputs'])) + "\n")
     exit(1)
 
-for i in range(len(options['inputs'])):
-    board.populate_input(i, int(options['inputs'][i]))
+board.populate_inputs(dict(enumerate([int(x) for x in options['inputs']])))
 
-if options['verbose'] > 1:
-    board.display()
+if options['verbose'] > 2:
+    board.display_tick()
 
 while board.tick():# and board.tick_count < 10000:
-    if options['verbose'] > 1:
-        board.display()
+    if options['verbose'] > 2:
+        board.display_tick()
 
 if options['verbose'] > 0:
-    print "STDOUT: " + board.print_out
+    print "STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
+                '/"' + (v if v > 31 else '?') + '"' \
+                for v in board.print_out])
 
+outputs = board.get_output_values()
 if options['verbose'] > 0:
     if len(board.outputs):
-        for n in board.outputs:
-            if board.outputs[n]:
-                o = board.get_output(n)
-                if __debug__: print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
+        out_str = "MB Outputs: " + \
+            ' '.join(['O' + str(n) + '=' + \
+                str(v) + "/0x" + hex(v)[2:].upper().zfill(2) + \
+                '/"' + (chr(v) if v > 31 else '?') + '"' \
+                for n,v in sorted(outputs.iteritems())])
+        print out_str
 
 if options['return']:
     if len(board.outputs):
-        if board.outputs[0]:
-            exit_code = board.get_output(0)
-            exit(exit_code)
+        if 0 in outputs:
+            exit_code = outputs[0]
+        else:
+            exit_code = 0
+        exit(exit_code)
