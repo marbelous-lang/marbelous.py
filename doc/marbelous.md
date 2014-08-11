@@ -31,9 +31,11 @@ Devices
 * `//` are deflectors which displace any marble one cell to the right or left, respectively.
 * `++` increments the marble on it and lets it fall through
 * `--` decrements the marble on it and lets it fall through
+* `+n` adds n to the marble
+* `-n` subtracts n from the marble
 * `>>` shifts bits right (divide by two)
 * `<<` shifts bits left (multiply by two)
-* `!!` invert bits (logical not)
+* `!!` invert bits (binary not)
 * `=n` sends marbles equal to n to the right, others down
 * `>n` sends marbles greater than to n to the right, others down
 * `<n` sends marbles less than to n to the right, others down

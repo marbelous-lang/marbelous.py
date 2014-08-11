@@ -28,7 +28,7 @@ devices = set([
     '>>',
     '!!'
     ])
-for p in '=><RPSIO':
+for p in '=><-+RPSIO':
     for d in b36_digits:
         devices.add(p+d)
 
@@ -240,6 +240,14 @@ class Board:
                     elif i == '!!': # invert bits / logical not
                         d = 1
                         m = ~m
+                    elif i[0] == '+' and i[1] in b36_digits:  # add a constant
+                        s = int(i[1], 36)
+                        d = 1
+                        m = m + s
+                    elif i[0] == '-' and i[1] in b36_digits:  # subtract a constant
+                        s = int(i[1], 36)
+                        d = 1
+                        m = m - s
                     elif i[0] == '=' and i[1] in b36_digits:  # equals a constant?
                         s = int(i[1], 36)
                         if m == s:
