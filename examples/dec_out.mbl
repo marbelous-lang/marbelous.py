@@ -44,6 +44,7 @@ O0 O1 O2
 .. .. .. O0 .. # O0 = q
 
 # modulo ten
+# while(I0>10){ I0-=10 } O0=I0
 :%A
 P0 ..
 I0 ..
