@@ -1,10 +1,40 @@
+# multiplies two numbers together
 I0 I1
 Mu lt
+Dp ..
 :Mult
 # O0 = I0 * I1
 # loops I0 times, adding I1 to itself
+# this function is more compact
 I0 P0 .. P1 I1 .. # two inputs, tops of both portal loops
 \\ >0 S0 \\ S0 .. # if I0>0, release I1 from S0
 .. S1 -- 00 /\ P1 # if I0=0, release the result from S1. duplicate I1, one copy to the aggregtor, one back to the top
 .. \/ P0 S1 .. .. # trash I0, or loop decremented I0, and S1 where the aggregator lives
 .. .. .. O0 .. .. # output the aggregator
+:Mult
+# O0 = I0 * I1
+# masks out bits of I1, shifts copies of I0 left that many times
+# this function is faster on average
+# both Mult functions have the same name, this one takes priority
+00 P0 I1 I1 I1 I1 I1 I1 I1 I1
+.. .. >> << << << << << << <<
+.. .. >> >> << << << << << <<
+.. .. >> >> >> << << << << <<
+.. .. >> >> >> >> << << << <<
+.. .. >> >> >> >> >> << << <<
+.. .. >> >> >> >> >> >> << <<
+.. .. >> >> >> >> >> >> >> <<
+.. .. =0 >> >> >> >> >> >> >>
+.. .. S0 =0 >> >> >> >> >> >>
+.. .. \/ S1 =0 >> >> >> >> >>
+.. .. I0 \/ S2 =0 >> >> >> >>
+.. .. S0 I0 \/ S3 =0 >> >> >>
+.. .. << S1 I0 \/ S4 =0 >> >>
+.. .. << << S2 I0 \/ S5 =0 >>
+.. .. << << << S3 I0 \/ S6 =0
+.. .. << << << << S4 I0 \/ S7
+.. .. << << << << << S5 I0 \/
+.. .. << << << << << << S6 I0
+.. .. << << << << << << << S7
+P0 O0 // // // // // // // //
+#include dec_out.mbl

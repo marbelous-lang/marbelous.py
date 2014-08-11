@@ -1,7 +1,7 @@
 # subtracts one number from another
-I0 I1 ..
-Su bt ..
-De co ut
+I0 I1
+Su bt
+Dp ..
 :Subt
 # O0 = I0 - I1
 # implemented as O0 = I0 + ~I1 +1
