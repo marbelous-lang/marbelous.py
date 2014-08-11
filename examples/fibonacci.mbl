@@ -3,7 +3,7 @@
 I0 ..
 Fb ..
 Dp ..
-
+#
 :Fb
 I0 I0 I0 .. # three copies of I0, call them A B C
 -- S0 <2 O0 # decrement A, hold B for sync, return C if it's <2
@@ -11,50 +11,5 @@ S0 -- <5 -- # hold A for sync, decrement B, divert and decrement C if it's <5
 -- Fb S0 O0 # decrement A, recurse with B, release sync or return C-1
 Fb .. \/ .. # recurse with A, do nothing with B, trash C
 \\ O0 .. .. # add A to B and return it
-
-# prints one marble as three decimal digits
-:Dp
-I0 .. ..
-De co ut
-+O +O +O
-+O +O +O
-
-# returns three decimal digits representing one input marble
-:Decout
-I0 I0 I0
-/A /A %A
-/A %A ..
-O0 O1 O2
-
-# divide by ten
-:/A
-.. I0 .. I0 ..
-.. >> I0 .. ..
-.. >> >> \\ ..
-.. .. // .. //
-.. /\ >> \\ ..
-.. .. >> .. //
-.. .. >> \\ ..
-.. .. >> .. ..
-\\ >> // .. ..
-.. >> .. .. ..
-.. >> .. .. ..
-.. /\ .. .. ..
-.. .. /\ << ..
-.. .. .. << ..
-.. \\ << // ..
-.. .. !! .. ..
-.. .. ++ .. ..
-.. .. \\ .. //
-\\ .. .. <A \/
-.. \\ .. R0 ..
-.. .. .. ++ ..
-.. .. \\ .. ..
-.. .. .. O0 ..
-
-# modulo ten
-:%A
-P0 ..
-I0 ..
->9 -A
-O0 P0
+#
+#include dec_out.mbl

@@ -51,8 +51,6 @@ Devices
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
 
-
-
 Functions
 ---------
 
@@ -66,6 +64,8 @@ Misc
 ----
 
 Comments in a board file begin with `#`
+
+Additional mbl files may be included with `#include file.mbl`
 
 The interpreter currently only has a "verbose" mode. The board state is printed to stdout at every tick. Marble output meant for stdout is queued until the program completes, and is displayed along with any outputs of the main board.
 

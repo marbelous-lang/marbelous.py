@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import copy
 import random
@@ -25,7 +26,6 @@ options = vars(parser.parse_args())
 
 verbose_stream = sys.stderr if options['stderr'] else sys.stdout
 
-mblfile = options['board']
 devices = set([
     '  ',
     '..',
@@ -382,6 +382,7 @@ class Board:
                     run = False
                     break
             if run:
+                hidden_activity = True
                 self.board_queue.append((copy.deepcopy(sub_board), (y, x)))
                 inputs = {}
                 for i in range(sub_board.function_width):
@@ -408,25 +409,43 @@ class Board:
 # the boards array contains pristine instances of boards from the source
 boards = {}
 
-with open(mblfile) as f:
-    thisboard = Board()
-    boardname = "MB"
-    boards[boardname] = thisboard
-    thisboard.name = boardname
+def load_mbl_file(filename,ignore_main=True):
     lines = []
-    for line in f.readlines():
-        if len(line)<2 or line[0] == '#':  # comment
-            pass
-        elif line[0] == ':':  # start of new named board
-            thisboard.parse(lines)
-            thisboard = Board()
-            boardname = line[1:].rstrip()
-            boards[boardname] = thisboard
-            thisboard.name = boardname
-            lines = []
-        else:  # another line in the current board
+    main_skipped = False
+    with open(filename) as f:
+        for line in f.readlines():
+            line = line.rstrip()
+            if len(line)>9 and line[0:9] == "#include ":
+                script_dir = os.path.dirname(options['board'])
+                lines.extend(load_mbl_file(os.path.join(script_dir,line[9:])))
+            if ignore_main and not main_skipped:
+                if len(line) > 0 and line[0] == ':':
+                    main_skipped = True
+                else:
+                    continue
+            if len(line)<2 or line[0] == '#':  # comment
+                continue
             lines.append(line)
-    thisboard.parse(lines)
+    return lines
+
+loaded_lines = load_mbl_file(options['board'],ignore_main=False)
+
+thisboard = Board()
+boardname = "MB"
+boards[boardname] = thisboard
+thisboard.name = boardname
+parse_lines = []
+for line in loaded_lines:
+    if line[0] == ':':  # start of new named board
+        thisboard.parse(parse_lines)
+        thisboard = Board()
+        boardname = line[1:].rstrip()
+        boards[boardname] = thisboard
+        thisboard.name = boardname
+        parse_lines = []
+    else:  # another line in the current board
+        parse_lines.append(line)
+thisboard.parse(parse_lines)
 
 # can't process function devices before all the functions in the file are loaded
 for b in boards.values():
@@ -450,7 +469,7 @@ while board.tick():# and board.tick_count < 10000:
 
 if options['verbose'] > 0:
     print "STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
-                '/"' + (v if v > 31 else '?') + '"' \
+                '/"' + (v if ord(v) > 31 else '?') + '"' \
                 for v in board.print_out])
 
 outputs = board.get_output_values()

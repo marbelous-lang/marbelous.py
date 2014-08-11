@@ -1,6 +1,5 @@
 I0 I1
 Mu lt
-.. ..
 :Mult
 # O0 = I0 * I1
 # loops I0 times, adding I1 to itself
