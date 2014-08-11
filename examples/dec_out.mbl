@@ -1,0 +1,50 @@
+# prints a marble as three decimal digits
+I0
+Dp
+
+# prints one marble as three decimal digits
+:Dp
+I0 .. ..
+De co ut
++O +O +O
++O +O +O
+
+# returns three decimal digits representing one input marble
+:Decout
+I0 I0 I0
+/A /A %A
+/A %A ..
+O0 O1 O2
+
+# divide by ten
+:/A
+.. I0 .. I0 ..
+.. >> I0 .. ..
+.. >> >> \\ ..
+.. .. // .. //
+.. /\ >> \\ ..
+.. .. >> .. //
+.. .. >> \\ ..
+.. .. >> .. ..
+\\ >> // .. ..
+.. >> .. .. ..
+.. >> .. .. ..
+.. /\ .. .. ..
+.. .. /\ << ..
+.. .. .. << ..
+.. \\ << // ..
+.. .. !! .. ..
+.. .. ++ .. ..
+.. .. \\ .. //
+\\ .. .. <A \/
+.. \\ .. R0 ..
+.. .. .. ++ ..
+.. .. \\ .. ..
+.. .. .. O0 ..
+
+# modulo ten
+:%A
+P0 ..
+I0 ..
+>9 -A
+O0 P0
