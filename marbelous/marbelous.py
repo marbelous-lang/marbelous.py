@@ -3,14 +3,30 @@
 import sys
 import copy
 import random
+import argparse
 
-if len(sys.argv) < 2:
-    print "Usage: %s foo.mbl [I0] [I1] [...]\n" % (os.path.basename(__file__))
-    exit(-1)
-
-mblfile = sys.argv[1]
 hex_digits = '0123456789ABCDEF'
 b36_digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+parser = argparse.ArgumentParser(description='Interpret a Marbelous board.')
+
+parser.add_argument('board', metavar='board.mbl',
+                    help='filename for the main board')
+parser.add_argument('inputs', metavar='input', nargs='*', 
+                    help='inputs for the main board')
+# add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])
+parser.add_argument('-r', '--return', dest='return', action='store_true',
+                    help='main board O0 as process return code')
+parser.add_argument('-v', '--verbose', dest='verbose', action='count', default=0,
+                    help='operate in verbose mode, -vv -vvv -vvvv increase verbosity')
+parser.add_argument('--stderr', dest='stderr', action='store_true',
+                    help='send verbose output to stderr instead of stdout')
+
+options = vars(parser.parse_args())
+
+verbose_stream = sys.stderr if options['stderr'] else sys.stdout
+
+mblfile = options['board']
 devices = set([
     '  ',
     '..',
@@ -32,10 +48,8 @@ for p in '=><-+RPSIO':
     for d in b36_digits:
         devices.add(p+d)
 
-
-def print_cell(x):
+def format_cell(x):
     return '..' if x is None else hex(x)[2:].upper().zfill(2) if type(x) is int else x.ljust(2)
-
 
 class Board:
     def __init__(self):
@@ -54,17 +68,15 @@ class Board:
         self.name = ''
 
     def printr(self, s):
-        if __debug__: print ' ' * self.recursiondepth + str(s)
+        verbose_stream.write( (' ' * self.recursiondepth + str(s)) + '\n')
 
     def display(self):
-        self.printr(self.name + " tick: " + str(self.tick_count))
+        self.printr(':' + self.name + " tick " + str(self.tick_count))
         for y in range(self.board_h):
             line = ''
             for x in range(self.board_w):
-                line += (print_cell(self.marbles[y][x]) if self.marbles[y][x] is not None else print_cell(self.instructions[y][x])) + ' '
+                line += (format_cell(self.marbles[y][x]) if self.marbles[y][x] is not None else format_cell(self.instructions[y][x])) + ' '
             self.printr(line)
-            # print ' '.join([print_cell(x) for x in self.marbles[y]])
-            # print ' '.join([print_cell(x) for x in self.instructions[y]])
 
     def parse(self, input):
         board = []
@@ -90,7 +102,6 @@ class Board:
             board.append(row)
             self.board_w = max(self.board_w, len(row))
             self.board_h += 1
-        # print self.board_h, self.board_w
         mbl = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         ins = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         for y in range(self.board_h):
@@ -99,7 +110,6 @@ class Board:
                     b = '  '
                 else:
                     b = board[y][x]
-                # print y, x, b
                 if b is None:
                     continue
                 elif b[0] in hex_digits and b[1] in hex_digits:
@@ -129,7 +139,8 @@ class Board:
         if len(self.outputs) > 0:
             self.functionwidth = max(self.functionwidth, max(self.outputs.keys())+1)
         if self.name != "MB" and (self.functionwidth*2) % len(self.name) != 0:
-            self.printr("Board name " + str(self.name) + " not a divisor of width " + str(self.functionwidth))
+            sys.stderr.write("Board name " + str(self.name) + " not a divisor of width " + str(self.functionwidth) + '\n')
+            exit(1)
 
     def find_functions(self):
         wide_function_names = dict([(b.name * (2 * b.functionwidth / len(b.name)), b.name) for b in boards.values()])
@@ -145,11 +156,10 @@ class Board:
                     self.functions.append((y, x-(len(name_so_far)-1)/2, wide_function_names[name_so_far]))
                     name_so_far = ''
             if name_so_far != '':
-                self.printr("Board " + str(self.name) + " row  " + str(y) + " ends with unexpected cells: " + str(name_so_far))
+                sys.stderr.write("Board " + str(self.name) + " row  " + str(y) + " ends with unexpected cells: " + str(name_so_far) + "\n")
                 exit(1)
 
     def populate_input(self, n, m):
-        # print n, m
         count = 0
         if self.inputs[n]:
             for y, x in self.inputs[n]:
@@ -161,10 +171,8 @@ class Board:
         out = 0
         found = False
         if n in self.outputs and self.outputs[n]:
-            # print self.outputs[n]
             for y, x in self.outputs[n]:
                 if self.marbles[y][x] is not None:
-                    # print self.marbles[y][x]
                     out += self.marbles[y][x]
                     found = True
         else:
@@ -174,7 +182,6 @@ class Board:
         return out % 256
 
     def tick(self):
-        # self.printr(str(self.marbles))
         if len(self.outputs):
             outputs_filled = True
             for o in self.outputs.values():
@@ -187,7 +194,8 @@ class Board:
                     outputs_filled = False
                     break
             if outputs_filled:
-                self.printr("Exiting board due to filled O instructions")
+                if options['verbose'] > 0:
+                    self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled O instructions")
                 return False
         mbl = self.marbles
         ins = self.instructions
@@ -195,10 +203,8 @@ class Board:
         nmb = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         exit_now = False
         hidden_activity = False
-        # print mbl
         # process each marble
         def put(y, x, m):
-            # self.printr("put " + str(y) + " " + str(x) + " " + str(m))
             nmb[y][x] = (m % 256) if not nmb[y][x] else (nmb[y][x]+m) % 256
         for y in range(self.board_h):
             for x in range(self.board_w):
@@ -209,8 +215,6 @@ class Board:
                 d = 0  # move down?
                 new_x = None
                 new_y = None
-                # print str(m) + "|" + str(y) + " " + str(x)
-                # print "considering " + print_cell(m) + " at " + str(y) + " " + str(x)
                 if m is None:  # no marble
                     continue
                 elif i:  # instruction
@@ -275,7 +279,6 @@ class Board:
                         d = 1
                     elif i[0] == 'P' and i[1] in b36_digits:  # portal
                         s = int(i[1], 36)
-                        # print "portal " + str(s) + " at " + str(y) + " " + str(x) + "?"
                         other_portals = []
                         for k in range(self.board_h):
                             for j in range(self.board_w):
@@ -285,7 +288,6 @@ class Board:
                                     ins[k][j][1] == i[1]:
                                     other_portals.append((k, j))
                         if other_portals:
-                            # print other_portals
                             new_y, new_x = random.choice(other_portals)
                             d = 1
                         else:
@@ -293,30 +295,24 @@ class Board:
                     elif i[0] == 'S' and i[1] in b36_digits:  # synchronize
                         if m is not None:
                             s = int(i[1], 36)
-                            # print "sync " + str(s) + " at " + str(y) + " " + str(x) + "?"
                             release = True
                             for k in range(self.board_h):
                                 for j in range(self.board_w):
-                                    # print x,y,m,k,j,ins[k][j],mbl[k][j]
                                     if (k != y or j != x) and \
                                         ins[k][j] and \
                                         ins[k][j][0] == 'S' and \
                                         ins[k][j][1] == i[1] and \
                                         mbl[k][j] is None:
-                                        # print "nothing at " + str(k) + " " + str(j)
                                         release = False
                             if release is False:
                                 put(y, x, m)
                             else:
                                 d = 1
-                            # else:
-                                # print "unpause!"
                     elif i[0] == 'O' and (i[1] in b36_digits or i[1] == '<' or i[1] == '>'):  # output
                         put(y, x, m)
                     elif i[0] == 'I' and i[1] in b36_digits:  # input == fall
                         d = 1
                     elif i == 'XX':  # exit
-                        # print "exit now!"
                         exit_now = True
                     else:  # unrecognized instruction or Input
                         pass  # default to trash!
@@ -324,10 +320,9 @@ class Board:
                     d = 1
                 new_y = new_y if new_y is not None else y
                 new_x = new_x if new_x is not None else x
-                # self.printr(str((y,x,d,r,l)))
                 if d:
                     if new_y == self.board_h-1:
-                        if __debug__:
+                        if options['verbose'] > 0:
                             self.print_out += hex(m)[2:].upper().zfill(2) + '(' + (chr(m) if m > 31 else '?') + ') '
                         else:
                             sys.stdout.write(chr(m))
@@ -352,9 +347,11 @@ class Board:
                 f.recursiondepth = self.recursiondepth+1
                 for i in g.inputs:
                     f.populate_input(i, mbl[c[0]][c[1]+i])
-                f.display()
-                while f.tick():
+                if options['verbose'] > 1:
                     f.display()
+                while f.tick():
+                    if options['verbose'] > 1:
+                        f.display()
                 self.print_out += f.print_out
                 if f.get_output(-1) is not None and c[1] > 0:
                     put(c[0], c[1]-1, f.get_output(-1))
@@ -367,10 +364,9 @@ class Board:
                     if t != None:
                         if c[0] < self.board_h-1:
                             put(c[0]+1, c[1]+o, t)
-                            # print "put " + str(f.get_output(o))
                         else:
-                            if __debug__:
-                                self.print_out += "0x" + hex(t)[2:].zfill(2) + '(' + (chr(t) if t > 31 else '?') + ') '
+                            if options['verbose'] > 0:
+                                self.print_out += hex(t)[2:].upper().zfill(2) + '(' + (chr(t) if t > 31 else '?') + ') '
                             else:
                                 sys.stdout.write(chr(t))
                             hidden_activity = True
@@ -378,14 +374,16 @@ class Board:
                 for i in range(g.functionwidth):
                     if mbl[c[0]][c[1]+i] is not None:
                         put(c[0], c[1]+i, mbl[c[0]][c[1]+i])
-        self.tick_count += 1
         diff = sum([cmp(x, y) != 0 for x, y in zip(self.marbles, nmb)])
         if diff == 0 and hidden_activity is False:
-            self.printr("Exiting board due to lack of activity")
+            if options['verbose'] > 0:
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to lack of activity")
             return False
         if exit_now:
-            self.printr("Exiting board due to filled X instruction")
+            if options['verbose'] > 0:
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled X instructions")
             return False
+        self.tick_count += 1
         self.marbles = nmb
         return True
 
@@ -399,7 +397,7 @@ with open(mblfile) as f:
     thisboard.name = boardname
     lines = []
     for line in f.readlines():
-        if line[0] == '#':  # comment
+        if len(line)<2 or line[0] == '#':  # comment
             pass
         elif line[0] == ':':  # start of new named board
             thisboard.parse(lines)
@@ -419,23 +417,32 @@ for b in boards.values():
 # make a copy of board zero as the main board
 board = copy.deepcopy(boards['MB'])
 
-if len(sys.argv)-2 != len(board.inputs):
-    print sys.argv[1] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(sys.argv)-2)
+if len(options['inputs']) != len(board.inputs):
+    sys.stderr.write(options['board'] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(options['inputs'])) + "\n")
     exit(1)
 
-for i in range(2, len(sys.argv)):
-    board.populate_input(i-2, int(sys.argv[i]))
+for i in range(len(options['inputs'])):
+    board.populate_input(i, int(options['inputs'][i]))
 
-board.display()
-
-while board.tick():# and board.tick_count < 10000:
-    # sys.stderr.write(str(board.tick_count) + "\n")
+if options['verbose'] > 1:
     board.display()
 
-if __debug__: print "STDOUT: " + board.print_out
+while board.tick():# and board.tick_count < 10000:
+    if options['verbose'] > 1:
+        board.display()
 
-if len(board.outputs):
-    for n in board.outputs:
-        if board.outputs[n]:
-            o = board.get_output(n)
-            if __debug__: print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
+if options['verbose'] > 0:
+    print "STDOUT: " + board.print_out
+
+if options['verbose'] > 0:
+    if len(board.outputs):
+        for n in board.outputs:
+            if board.outputs[n]:
+                o = board.get_output(n)
+                if __debug__: print "MB Outputs: " + str(o) + "/0x" + hex(o)[2:].upper().zfill(2) + '(' + (chr(o) if o > 31 else '?') + ') '
+
+if options['return']:
+    if len(board.outputs):
+        if board.outputs[0]:
+            exit_code = board.get_output(0)
+            exit(exit_code)
