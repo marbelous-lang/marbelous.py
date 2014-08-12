@@ -35,6 +35,7 @@ Devices
 * `-n` subtracts n from the marble
 * `>>` shifts bits right (divide by two)
 * `<<` shifts bits left (multiply by two)
+* `^n` returns 1 if the nth bit of the marble is 1 and 0 if it's 0. Where `^0` is the least significant bit. 
 * `~~` invert bits (binary not)
 * `=n` lets marbles equal to n fall through, sends others to the right
 * `>n` lets marbles greater than to n fall through, sends others to the right
@@ -51,6 +52,7 @@ Devices
 * `]]` reads one byte from stdin which falls, or outputs the input marble to the right
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
+With the exception of `^n`, which has 8 variations, form `^0` to `^7`.
 
 Functions
 ---------
