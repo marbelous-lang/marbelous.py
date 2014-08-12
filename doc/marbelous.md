@@ -35,27 +35,29 @@ Devices
 * `-n` subtracts n from the marble
 * `>>` shifts bits right (divide by two)
 * `<<` shifts bits left (multiply by two)
+* `^n` returns 1 if the nth bit of the marble is 1 and 0 if it's 0. Where `^0` is the least significant bit. 
 * `~~` invert bits (binary not)
-* `=n` sends marbles equal to n to the right, others down
-* `>n` sends marbles greater than to n to the right, others down
-* `<n` sends marbles less than to n to the right, others down
+* `=n` lets marbles equal to n fall through, sends others to the right
+* `>n` lets marbles greater than to n fall through, sends others to the right
+* `<n` lets marbles less than to n fall through, sends others to the right
 * `@n` is a portal, which transports a marble to the cell beneath a random other portal with the same n
 * `&n` is a synchroniser, which stalls a marble until there is a marble on every synchroniser with the same n, when they all fall through
 * `?n` generates a random marble 0-n
 * `??` generates a random marble 0 through the value of the input marble
 * `!!` return from the current board immediately
-* `}n` will contain the n-th input when a function is invoked. Duplicates of the same `In` result in duplicated input values.
+* `}n` will contain the n-th input when a function is invoked. Duplicates of the same `}n` result in duplicated input values.
 * `{n` act like a group of synchronisers to collect the outputs. The function terminates when all outputs are filled with a marble (or the termination device, `!!`, is used). Each {n may be used multiple times, and only one of each n needs to be filled for the function to terminate. If multiple cells are filled, the marbles will be added to give the output.
 * `{<` and ...
 * `{>` are additional outputs which appear to the sides of the function device. If present, these need to be filled too, for the board to terminate. They have no effect on the main board.
 * `]]` reads one byte from stdin which falls, or outputs the input marble to the right
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
+With the exception of `^n`, which has 8 variations, form `^0` to `^7`.
 
 Functions
 ---------
 
-The number of inputs and outputs of a cell is implicitly determined by the distinct `In` and `On` used.
+The number of inputs and outputs of a cell is implicitly determined by the distinct `}n` and `{n` used.
 
 To use a board as a function, you write its name across max(1,I+1,O+1) horizontally adjacent cells. Where I is the highest input number used and O is the highest output number used (side outputs are not counted). If the board's name is not as long as its device width, the name is repeated.
 
