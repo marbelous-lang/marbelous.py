@@ -13,68 +13,68 @@
 # uses Dr to produce the X and Y coordinates
 # prints X, then space, then Y, then \n
 .. .. 0A
-I0 .. ..
+}0 .. ..
 Dr Dr 20
 Dp .. ..
 .. .. ..
 .. Dp ..
 # calls Dragon with (0,0,n), adds 127 to both outputs
 :Dr
-I0 I0 I0 I0 I0
-R0 R0 .. R0 R0
+}0 }0 }0 }0 }0
+?0 ?0 .. ?0 ?0
 .. .. .. -- --
 Dr ag on >> >>
-O0 O1 .. O0 O1
+{0 {1 .. {0 {1
 # Dragon recursively calls itself
 :Dragon
-I0 I1 I2 .. ..
-.. .. -- I2 ..
-Dr ag on >0 ..
-O0 O1 .. O2 St
+}0 }1 }2 .. ..
+.. .. -- }2 ..
+Dr ag on =0 ..
+{0 {1 .. {2 St
 .. .. /\ .. //
 .. /\ ++ \\ ..
-Dg I0 Dg I1 ..
-O0 // O1 // O2
+Dg }0 Dg }1 ..
+{0 // {1 // {2
 # Handy function for converting directions (0-3 mod 4) into x/y offsets
 :Dg
-I0
+}0
 >>
 M2
 <<
 --
-O0
-# Direction of I0'th fold in the dragon curve (1 or -1)
+{0
+# Direction of }0'th fold in the dragon curve (1 or -1)
 :St
-.. I0 ..
-.. Np I0
-.. << !!
+.. }0 ..
+.. Np }0
+.. << ~~
 .. ++ //
 .. St ..
-I0 !! ..
+}0 ~~ ..
 Pw ++ ..
->0 O0 ..
+=0 {0 ..
 \/ .. ..
-# Largest power of 2 <= I0
+# Largest power of 2 <= }0
 :Np
-I0 ..
-<3 O0
+}0 ..
+>2 {0
 >> ..
 Np ..
 << ..
-O0 ..
-# Is I0 a power of 2?
+{0 ..
+# Is }0 a power of 2?
 :Pw
-I0 .. I0
->1 >> M2
-O0 .. <1
+}0 .. }0
+<2 >> M2
+{0 .. >0
 .. Pw --
-.. O0 O0
-# I0 mod 2
+.. {0 {0
+# }0 mod 2
 :M2
-I0 ..
->> I0
+}0 ..
+>> }0
 << ..
-!! ..
+~~ ..
 ++ //
-O0 ..
+{0 ..
 #include dec_out.mbl

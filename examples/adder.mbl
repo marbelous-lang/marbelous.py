@@ -1,9 +1,9 @@
 # adds together two numbers
-I0 I1
+}0 }1
 Pl us
 Dp
 :Plus
-# O0 = I0 + I1
-I0 .. I1
-\\ O0 //
+# return }0 + }1
+}0 .. }1
+\\ {0 //
 #include dec_out.mbl

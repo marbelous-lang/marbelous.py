@@ -6,17 +6,18 @@ import copy
 import random
 import argparse
 
+oct_digits = '01234567'
 hex_digits = '0123456789ABCDEF'
 b36_digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-parser = argparse.ArgumentParser(description='Interpret a Marbelous board.')
+parser = argparse.ArgumentParser(description='Interpret a Marbelous file.')
 
-parser.add_argument('board', metavar='board.mbl',
-                    help='filename for the main board')
+parser.add_argument('file', metavar='filename.mbl',
+                    help='filename for the main board file')
 parser.add_argument('inputs', metavar='input', nargs='*', 
                     help='inputs for the main board')
 parser.add_argument('-r', '--return', dest='return', action='store_true',
-                    help='main board O0 as process return code')
+                    help='main board {0 as process return code')
 parser.add_argument('-v', '--verbose', dest='verbose', action='count', default=0,
                     help='operate in verbose mode, -vv -vvv -vvvv increase verbosity')
 parser.add_argument('--stderr', dest='stderr', action='store_true',
@@ -35,17 +36,21 @@ devices = set([
     '/\\',
     '++',
     '--',
-    'XX',
-    'R?',
-    'O<',
-    'O>',
+    '!!',
+    '??',
+    '{<',
+    '{>',
     '<<',
     '>>',
-    '!!'
+    '~~'
     ])
-for p in '=><-+RPSIO':
+# devices with variations for 36 constants
+for p in '=><-+?@&}{':
     for d in b36_digits:
         devices.add(p+d)
+# bit fetch devices
+for d in oct_digits:
+    devices.add('^'+d)
 
 def format_cell(x):
     return '..' if x is None else hex(x)[2:].upper().zfill(2) if type(x) is int else x.ljust(2)
@@ -59,13 +64,13 @@ class Board:
         self.board_h = 0
         self.board_w = 0
         self.marbles = []
-        self.instructions = []
+        self.devices = []
         self.functions = []
         self.print_out = ''
         self.recursion_depth = 0
         self.tick_count = 0
         self.name = ''
-        self.board_queue = []
+        self.function_queue = []
 
     def __repr__(self):
         return "Board name=" + self.name + " tick=" + str(self.tick_count)
@@ -74,8 +79,8 @@ class Board:
         verbose_stream.write( (' ' * self.recursion_depth + str(s)) + '\n')
 
     def display_tick(self):
-        if self.board_queue:
-            board, coordinates = self.board_queue[-1]
+        if self.function_queue:
+            board, coordinates = self.function_queue[-1]
             board.display_tick()
         else:
             self.display()
@@ -85,7 +90,7 @@ class Board:
         for y in range(self.board_h):
             line = ''
             for x in range(self.board_w):
-                line += (format_cell(self.marbles[y][x]) if self.marbles[y][x] is not None else format_cell(self.instructions[y][x])) + ' '
+                line += (format_cell(self.marbles[y][x]) if self.marbles[y][x] is not None else format_cell(self.devices[y][x])) + ' '
             self.printr(line)
 
     def parse(self, input):
@@ -113,7 +118,7 @@ class Board:
             self.board_w = max(self.board_w, len(row))
             self.board_h += 1
         mbl = [[None for x in range(self.board_w)] for y in range(self.board_h)]
-        ins = [[None for x in range(self.board_w)] for y in range(self.board_h)]
+        dev = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         for y in range(self.board_h):
             for x in range(self.board_w):
                 if x >= len(board[y]):
@@ -125,13 +130,13 @@ class Board:
                 elif b[0] in hex_digits and b[1] in hex_digits:
                     mbl[y][x] = int(b, 16)
                 else:
-                    ins[y][x] = b
-                    if b[0] == 'I' and b[1] in b36_digits:
+                    dev[y][x] = b
+                    if b[0] == '}' and b[1] in b36_digits:
                         num = int(b[1], 36)
                         if num not in self.inputs:
                             self.inputs[num] = []
                         self.inputs[num].append((y, x))
-                    elif b[0] == 'O' and (b[1] in b36_digits or b[1] == '<' or b[1] == '>'):
+                    elif b[0] == '{' and (b[1] in b36_digits or b[1] == '<' or b[1] == '>'):
                         if b[1] in b36_digits:
                             num = int(b[1], 36)
                         elif b[1] == '<':
@@ -142,7 +147,7 @@ class Board:
                             self.outputs[num] = []
                         self.outputs[num].append((y, x))
         self.marbles = mbl
-        self.instructions = ins
+        self.devices = dev
         self.function_width = 1
         if len(self.inputs) > 0:
             self.function_width = max(self.function_width, max(self.inputs.keys())+1)
@@ -157,7 +162,7 @@ class Board:
         name_so_far = ''
         for y in range(self.board_h):
             for x in range(self.board_w):
-                b = self.instructions[y][x]
+                b = self.devices[y][x]
                 if name_so_far == '':
                     if b is None or b in devices or (b[0] in hex_digits and b[1] in hex_digits):
                         continue
@@ -200,17 +205,17 @@ class Board:
         return True
 
     def tick(self):
-        if self.all_outputs_filled() and not self.board_queue:
+        if self.all_outputs_filled() and not self.function_queue:
             if options['verbose'] > 1:
-                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled O instructions")
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled { devices")
             return False
 
         mbl = self.marbles
         def put_immediate(y, x, m):
             mbl[y][x] = (m % 256) if not mbl[y][x] else (mbl[y][x]+m) % 256
-        if self.board_queue:
+        if self.function_queue:
             #TODO: use a deque so we can run functions in "correct" order
-            board, coordinates = self.board_queue[-1]
+            board, coordinates = self.function_queue[-1]
             y, x = coordinates
             if not board.tick():
                 for location, value in board.get_output_values().items():
@@ -220,22 +225,23 @@ class Board:
                         put_immediate(y, x+board.function_width, value)
                     else:
                         if y == self.board_h-1:
-                            if options['verbose'] > 0 or options['stderr']:
+                            if options['verbose'] > 0:
                                 self.print_out += chr(value)
+                            if options['verbose'] > 1:
                                 self.printr("STDOUT: " + "0x" + hex(value)[2:].upper().zfill(2) + \
                                             '/"' + (chr(value) if value > 31 else '?') + '"')
                             if options['verbose'] == 0 or options['stderr']:
                                 sys.stdout.write(chr(value))
                         else:
                             put_immediate(y+1, x+int(location), value)
-                self.board_queue.pop()
+                self.function_queue.pop()
                 self.print_out += board.print_out
                 if options['verbose'] > 2:
                     board.display()
             return True
 
         self.tick_count += 1
-        ins = self.instructions
+        dev = self.devices
         # new marble array
         nmb = [[None for x in range(self.board_w)] for y in range(self.board_h)]
         exit_now = False
@@ -249,7 +255,7 @@ class Board:
         for y in range(self.board_h):
             for x in range(self.board_w):
                 m = mbl[y][x]
-                i = ins[y][x]
+                i = dev[y][x]
                 l = 0  # move left?
                 r = 0  # move right?
                 d = 0  # move down?
@@ -257,7 +263,7 @@ class Board:
                 new_y = None
                 if m is None:  # no marble
                     continue
-                elif i:  # instruction
+                elif i:  # device
                     if i == '..' or i == '  ':  # fall
                         d = 1
                     elif i == '\\\\':  # divert right
@@ -281,9 +287,13 @@ class Board:
                     elif i == '>>': # shift right
                         d = 1
                         m = m >> 1
-                    elif i == '!!': # invert bits / logical not
+                    elif i == '~~': # invert bits / logical not
                         d = 1
                         m = ~m
+                    elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
+                        s = int(i[1], 8)
+                        d = 1
+                        m = (m & (1 << s)) > 0
                     elif i[0] == '+' and i[1] in b36_digits:  # add a constant
                         s = int(i[1], 36)
                         d = 1
@@ -295,75 +305,76 @@ class Board:
                     elif i[0] == '=' and i[1] in b36_digits:  # equals a constant?
                         s = int(i[1], 36)
                         if m == s:
-                            r = 1
-                        else:
                             d = 1
+                        else:
+                            r = 1
                     elif i[0] == '>' and i[1] in b36_digits:  # greater than a constant?
                         s = int(i[1], 36)
                         if m > s:
-                            r = 1
-                        else:
                             d = 1
+                        else:
+                            r = 1
                     elif i[0] == '<' and i[1] in b36_digits:  # less than a constant?
                         s = int(i[1], 36)
                         if m < s:
-                            r = 1
-                        else:
                             d = 1
-                    elif i[0] == 'R' and (i[1] in b36_digits or i[1] == '?'):  # random number, 0-static or 0-marble
+                        else:
+                            r = 1
+                    elif i[0] == '?' and (i[1] in b36_digits or i[1] == '?'):  # random number, 0-static or 0-marble
                         if i[1] != '?':
                             s = int(i[1], 36)
                         else:
                             s = m
                         m = random.randint(0, s)
                         d = 1
-                    elif i[0] == 'P' and i[1] in b36_digits:  # portal
+                    elif i[0] == '@' and i[1] in b36_digits:  # portal
                         s = int(i[1], 36)
                         other_portals = []
                         for k in range(self.board_h):
                             for j in range(self.board_w):
                                 if (k != y or j != x) and \
-                                    ins[k][j] and \
-                                    ins[k][j][0] == 'P' and \
-                                    ins[k][j][1] == i[1]:
+                                    dev[k][j] and \
+                                    dev[k][j][0] == '@' and \
+                                    dev[k][j][1] == i[1]:
                                     other_portals.append((k, j))
                         if other_portals:
                             new_y, new_x = random.choice(other_portals)
                             d = 1
                         else:
                             d = 1
-                    elif i[0] == 'S' and i[1] in b36_digits:  # synchronize
+                    elif i[0] == '&' and i[1] in b36_digits:  # synchronize
                         if m is not None:
                             s = int(i[1], 36)
                             release = True
                             for k in range(self.board_h):
                                 for j in range(self.board_w):
                                     if (k != y or j != x) and \
-                                        ins[k][j] and \
-                                        ins[k][j][0] == 'S' and \
-                                        ins[k][j][1] == i[1] and \
+                                        dev[k][j] and \
+                                        dev[k][j][0] == '&' and \
+                                        dev[k][j][1] == i[1] and \
                                         mbl[k][j] is None:
                                         release = False
                             if release is False:
                                 put(y, x, m)
                             else:
                                 d = 1
-                    elif i[0] == 'O' and (i[1] in b36_digits or i[1] == '<' or i[1] == '>'):  # output
+                    elif i[0] == '{' and (i[1] in b36_digits or i[1] == '<' or i[1] == '>'):  # output
                         put(y, x, m)
-                    elif i[0] == 'I' and i[1] in b36_digits:  # input == fall
+                    elif i[0] == '}' and i[1] in b36_digits:  # input == fall
                         d = 1
-                    elif i == 'XX':  # exit
+                    elif i == '!!':  # exit
                         exit_now = True
-                    else:  # unrecognized instruction or Input
+                    else:  # unrecognized device
                         pass  # default to trash!
-                else:  # no instruction
+                else:  # no device
                     d = 1
                 new_y = new_y if new_y is not None else y
                 new_x = new_x if new_x is not None else x
                 if d:
                     if new_y == self.board_h-1:
-                        if options['verbose'] > 0 or options['stderr']:
+                        if options['verbose'] > 0:
                             self.print_out += chr(m)
+                        if options['verbose'] > 1:
                             self.printr("STDOUT: " + "0x" + hex(m)[2:].upper().zfill(2) + \
                                         '/"' + (chr(m) if m > 31 else '?') + '"')
                         if options['verbose'] == 0 or options['stderr']:
@@ -387,12 +398,12 @@ class Board:
                     break
             if run:
                 hidden_activity = True
-                self.board_queue.append((copy.deepcopy(sub_board), (y, x)))
+                self.function_queue.append((copy.deepcopy(sub_board), (y, x)))
                 inputs = {}
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
-                self.board_queue[-1][0].populate_inputs(inputs)
-                self.board_queue[-1][0].recursion_depth = self.recursion_depth+1
+                self.function_queue[-1][0].populate_inputs(inputs)
+                self.function_queue[-1][0].recursion_depth = self.recursion_depth+1
             else:
                 for i in range(sub_board.function_width):
                     if self.marbles[y][x+i] is not None:
@@ -405,7 +416,7 @@ class Board:
             return False
         if exit_now:
             if options['verbose'] > 1:
-                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled X instructions")
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled X devices")
             return False
         self.marbles = nmb
         return True
@@ -420,7 +431,7 @@ def load_mbl_file(filename,ignore_main=True):
         for line in f.readlines():
             line = line.rstrip()
             if len(line)>9 and line[0:9] == "#include ":
-                script_dir = os.path.dirname(options['board'])
+                script_dir = os.path.dirname(options['file'])
                 lines.extend(load_mbl_file(os.path.join(script_dir,line[9:])))
             if ignore_main and not main_skipped:
                 if len(line) > 0 and line[0] == ':':
@@ -432,7 +443,7 @@ def load_mbl_file(filename,ignore_main=True):
             lines.append(line)
     return lines
 
-loaded_lines = load_mbl_file(options['board'],ignore_main=False)
+loaded_lines = load_mbl_file(options['file'],ignore_main=False)
 
 thisboard = Board()
 boardname = "MB"
@@ -459,7 +470,7 @@ for b in boards.values():
 board = copy.deepcopy(boards['MB'])
 
 if len(options['inputs']) != len(board.inputs):
-    sys.stderr.write(options['board'] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(options['inputs'])) + "\n")
+    sys.stderr.write(options['file'] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(options['inputs'])) + "\n")
     exit(1)
 
 board.populate_inputs(dict(enumerate([int(x) for x in options['inputs']])))
@@ -480,7 +491,7 @@ outputs = board.get_output_values()
 if options['verbose'] > 0:
     if len(board.outputs):
         out_str = "MB Outputs: " + \
-            ' '.join(['O' + str(n) + '=' + \
+            ' '.join(['{' + str(n) + '=' + \
                 str(v) + "/0x" + hex(v)[2:].upper().zfill(2) + \
                 '/"' + (chr(v) if v > 31 else '?') + '"' \
                 for n,v in sorted(outputs.iteritems())])

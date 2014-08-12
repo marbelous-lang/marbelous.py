@@ -1,9 +1,9 @@
 # demonstration of function width set by highest numbered output
-.. I0 .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
+.. }0 .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
 .. CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ CZ ..
 .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
 :CZ
-# output I0 to the right of a 36-wide function
-I0
-O>
-OZ
+# output }0 to the right of a 36-wide function
+}0
+{>
+{Z

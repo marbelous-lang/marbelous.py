@@ -1,41 +1,41 @@
 # compares two four-byte sets
 # returns 1 if they are anagrams of each other, 0 otherwise
-I0 I1 I2 I3 I4 I5 I6 I7 00 .. 01 # 8 inputs and the potential output values 00/01
-So rt So rt So rt So rt S0 .. S1 # start bubble sorting the inputs, also hold output values in syncs
-.. So rt .. .. So rt .. O0 P4 O0 # continue bubble sorting the inputs, output the result, begin adding up comparison results
-So rt So rt So rt So rt P6 .. P5 # more bubble sorting, more comparison results
+}0 }1 }2 }3 }4 }5 }6 }7 00 .. 01 # 8 inputs and the potential output values 00/01
+So rt So rt So rt So rt &0 .. &1 # start bubble sorting the inputs, also hold output values in syncs
+.. So rt .. .. So rt .. {0 @4 {0 # continue bubble sorting the inputs, output the result, begin adding up comparison results
+So rt So rt So rt So rt @6 .. @5 # more bubble sorting, more comparison results
 .. So rt .. .. So rt .. \\ .. //
-So rt So rt So rt So rt P7 S2 .. # last round of bubble sort, more comparison results
-.. P0 .. P1 P0 .. P1 .. S2 .. .. # swap sorted inputs from 12341234 to 11223344
-.. .. .. .. .. .. .. .. \\ <4 S0 # check if all four comparisons were true, release an output sync
-Eq al Eq al Eq al Eq al .. S1 .. # check if each sorted input is equal to its neighbor
-P4 .. P5 .. P6 .. P7 .. .. \/ \/ # send equality results over to be added up
+So rt So rt So rt So rt @7 &2 .. # last round of bubble sort, more comparison results
+.. @0 .. @1 @0 .. @1 .. &2 .. .. # swap sorted inputs from 12341234 to 11223344
+.. .. .. .. .. .. .. .. \\ >3 &0 # check if all four comparisons were true, release an output sync
+Eq al Eq al Eq al Eq al .. &1 .. # check if each sorted input is equal to its neighbor
+@4 .. @5 .. @6 .. @7 .. .. \/ \/ # send equality results over to be added up
 :Sort
 # sorts two inputs
-.. .. I0 .. .. I1 .. ..
+.. .. }0 .. .. }1 .. ..
 .. .. /\ Gt eq /\ .. ..
-S0 /\ S1 >0 S1 S0 /\ S1
-O0 .. O1 S0 .. O1 .. O0
+&0 /\ &1 =0 &1 &0 /\ &1
+{0 .. {1 &0 .. {1 .. {0
 .. .. .. \/ .. .. .. ..
 :Gteq
-# if I0>=I1 then O0=1 else O0=0
+# if }0>=}1 then {0=1 else {0=0
 # decrements both inputs repeatedly
-# when I1 reaches zero, release a 1 output
-# when I0 reaches zero, release a 0 output
-P0 00 P1 01
-I0 S0 I1 S1
--- O0 -- O0
-=0 S0 =0 S1
-P0 \/ P1 \/
+# when }1 reaches zero, release a 1 output
+# when }0 reaches zero, release a 0 output
+@0 00 @1 01
+}0 &0 }1 &1
+-- {0 -- {0
+>0 &0 >0 &1
+@0 \/ @1 \/
 :Eqal
-# if I0==I1 then O0=1 else O0=0
+# if }0==}1 then {0=1 else {0=0
 # decrements both inputs repeatedly
 # when either reaches zero, release a zero output
 # if both reach zero, also release a 1 output, which gets added to the 0
 .. 00 .. 00 01
-P0 S0 P1 S1 S2
-I0 .. I1 .. O0
--- O0 -- O0 ..
-=0 S0 =0 S1 ..
-P0 S2 P1 S2 ..
+@0 &0 @1 &1 &2
+}0 .. }1 .. {0
+-- {0 -- {0 ..
+>0 &0 >0 &1 ..
+@0 &2 @1 &2 ..
 .. \/ .. \/ ..

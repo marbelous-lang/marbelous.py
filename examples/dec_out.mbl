@@ -1,27 +1,27 @@
 # prints a marble as three decimal digits
-I0
+}0
 Dp
 
 # prints one marble as three decimal digits
 :Dp
-I0 .. ..
+}0 .. ..
 De co ut
 +O +O +O
 +O +O +O
 
 # returns three decimal digits representing one input marble
 :Decout
-I0 I0 I0
+}0 }0 }0
 /A /A %A
 /A %A ..
-O0 O1 O2
+{0 {1 {2
 
 # divide by ten
 # http://stackoverflow.com/a/19076173/13675
 :/A
-.. I0 .. I0 .. # right I0 is used for calculating r at the bottom
-.. >> I0 .. .. 
-.. >> >> \\ .. # q = (I0 >> 1) + (I0 >> 2)
+.. }0 .. }0 .. # right }0 is used for calculating r at the bottom
+.. >> }0 .. .. 
+.. >> >> \\ .. # q = (}0 >> 1) + (}0 >> 2)
 .. .. // .. //
 .. /\ >> \\ ..
 .. .. >> .. //
@@ -34,19 +34,19 @@ O0 O1 O2
 .. .. /\ << ..
 .. .. .. << ..
 .. \\ << // .. # q = (q + (q << 2)) << 1
-.. .. !! .. .. 
-.. .. ++ .. .. # !! and ++ make unary negation
-.. .. \\ .. // # r = -q + I0
-\\ .. .. <A \/
-.. \\ .. R0 ..
+.. .. ~~ .. .. 
+.. .. ++ .. .. # ~~ and ++ make unary negation
+.. .. \\ .. // # r = -q + }0
+\\ .. .. >9 \/
+.. \\ .. ?0 ..
 .. .. .. ++ ..
 .. .. \\ .. .. # q = q + (r>9)
-.. .. .. O0 .. # O0 = q
+.. .. .. {0 .. # {0 = q
 
 # modulo ten
-# while(I0>10){ I0-=10 } O0=I0
+# while(}0>10){ }0-=10 } {0=}0
 :%A
-P0 ..
-I0 ..
->9 -A
-O0 P0
+@0 ..
+}0 ..
+<A -A
+{0 @0

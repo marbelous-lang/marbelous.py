@@ -1,7 +1,7 @@
-.. I0 ..
+.. }0 ..
 .. 3W ..
 .. .. ..
 :3W
-# sends I0 to O< and O0 and O>
-I0 I0 I0
-O< O0 O>
+# sends }0 to {< and {0 and {>
+}0 }0 }0
+{< {0 {>

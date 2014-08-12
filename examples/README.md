@@ -1,7 +1,7 @@
 Marbelous examples
 ==================
 
-Marbelous boards in this directory are examples of what can be done with the language.
+Marbelous files in this directory are examples of what can be done with the language.
 
 The standard format for an example includes a main board that accepts one or more inputs and outputs results to stdout. A sub-board should provide the demonstrated functionality, so that the example might be included in another mbl file.
 

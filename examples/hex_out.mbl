@@ -1,28 +1,28 @@
 # prints a marble as two hex digits
-I0 ..
+}0 ..
 He xo
 
 # prints one marble as two hex digits
 :Hp
-P0 I0
-I0 <<
+@0 }0
+}0 <<
 >> <<
 >> <<
 >> <<
->> P0
->9 +S
+>> @0
+<A +S
 +O +R
 +O ..
 
 # returns two hex digits representing one input marble
 :Hexo
-.. I0 P0
-I0 << >> ..
+.. }0 @0
+}0 << >> ..
 >> << >> ..
 >> << >> ..
 >> << >> ..
->> P0 >9 +S
->9 +S +O +R
+>> @0 <A +S
+<A +S +O +R
 +O +R +O ..
-+O .. O1 //
-O0 // .. ..
++O .. {1 //
+{0 // .. ..
