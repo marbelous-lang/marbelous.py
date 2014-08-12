@@ -48,6 +48,7 @@ Devices
 * `{n` act like a group of synchronisers to collect the outputs. The function terminates when all outputs are filled with a marble (or the termination device, `!!`, is used). Each {n may be used multiple times, and only one of each n needs to be filled for the function to terminate. If multiple cells are filled, the marbles will be added to give the output.
 * `{<` and ...
 * `{>` are additional outputs which appear to the sides of the function device. If present, these need to be filled too, for the board to terminate. They have no effect on the main board.
+* `]]` reads one byte from stdin which falls, or outputs the input marble to the right
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
 
