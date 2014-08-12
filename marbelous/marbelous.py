@@ -2,13 +2,17 @@
 
 import os
 import sys
-import copy
-import random
-import argparse
+import copy     # to duplicate board objects
+import random   # for portals and random devices
+import argparse # for command line arguments
+import termios  # for unbuffered stdin
+from threading import Thread # for non-blocking stdin
+try:
+    from Queue import Queue, Empty # for non-blocking stdin
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
 
-# removed pending implementation of non-blocking unbuffered non-slurping stdin
-# stdin_data = list(sys.stdin.read())[::-1]
-stdin_data = []
+
 
 oct_digits = '01234567'
 hex_digits = '0123456789ABCDEF'
@@ -30,6 +34,36 @@ parser.add_argument('--stderr', dest='stderr', action='store_true',
 options = vars(parser.parse_args())
 
 verbose_stream = sys.stderr if options['stderr'] else sys.stdout
+
+def unbuffered_getch(stream):
+    try:
+        import msvcrt
+    except:
+        fd = stream.fileno()
+        # temporarily unbuffer stdin if it's a tty
+        if os.isatty(fd):
+            old_settings = termios.tcgetattr(fd)
+            new_settings = termios.tcgetattr(fd)
+            try:
+                new_settings[3] = new_settings[3] & ~termios.ICANON # leave canonical mode
+                termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+                ch = stream.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSANOW, old_settings)
+        else:
+            ch = stream.read(1)
+    else:
+        ch = msvcrt.getch()
+    return ch
+
+def enqueue_input(stream, queue):
+    for char in iter(lambda:unbuffered_getch(stream), b''):
+        queue.put(char)
+
+stdin_queue = Queue()
+stdin_thread = Thread(target=enqueue_input, args=(sys.stdin, stdin_queue))
+stdin_thread.daemon = True # thread dies with the program
+stdin_thread.start()
 
 devices = set([
     '  ',
@@ -296,11 +330,13 @@ class Board:
                         d = 1
                         m = ~m
                     elif i == ']]': # invert bits / logical not
-                        if len(stdin_data):
-                            m = ord(stdin_data.pop())
-                            d = 1
-                        else:
+                        try:
+                            char = stdin_queue.get_nowait()
+                        except Empty: # no bytes pending from stdin
                             r = 1
+                        else: # got a byte from stdin
+                            m = ord(char)
+                            d = 1
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
                         s = int(i[1], 8)
                         d = 1
