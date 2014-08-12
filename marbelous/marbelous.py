@@ -6,6 +6,8 @@ import copy
 import random
 import argparse
 
+stdin_data = list(sys.stdin.read())[::-1]
+
 oct_digits = '01234567'
 hex_digits = '0123456789ABCDEF'
 b36_digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -42,7 +44,8 @@ devices = set([
     '{>',
     '<<',
     '>>',
-    '~~'
+    '~~',
+    ']]'
     ])
 # devices with variations for 36 constants
 for p in '=><-+?@&}{':
@@ -290,6 +293,12 @@ class Board:
                     elif i == '~~': # invert bits / logical not
                         d = 1
                         m = ~m
+                    elif i == ']]': # invert bits / logical not
+                        if len(stdin_data):
+                            m = ord(stdin_data.pop())
+                            d = 1
+                        else:
+                            r = 1
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
                         s = int(i[1], 8)
                         d = 1
