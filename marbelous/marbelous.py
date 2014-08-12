@@ -6,7 +6,9 @@ import copy
 import random
 import argparse
 
-stdin_data = list(sys.stdin.read())[::-1]
+# removed pending implementation of non-blocking unbuffered non-slurping stdin
+# stdin_data = list(sys.stdin.read())[::-1]
+stdin_data = []
 
 oct_digits = '01234567'
 hex_digits = '0123456789ABCDEF'
