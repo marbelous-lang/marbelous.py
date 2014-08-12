@@ -1,0 +1,20 @@
+}0 }1
+Bd if
+Dp ..
+
+:Bdif
+# returns the amount of bits that differ between two marbles
+# 0 means equality
+}0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1
+^0 ^0 ^1 ^1 ^2 ^2 ^3 ^3 ^4 ^4 ^5 ^5 ^6 ^6 ^7 ^7 # mask out individual bits of }0 and }1
+Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr # feed them into Xorr
+\\ @0 // @0 \\ .. // .. \\ .. // @1 \\ @1 // .. # add the results together
+.. .. .. \\ @2 // @2 .. @3 \\ @3 // .. .. .. ..
+.. .. .. .. .. .. \\ }0 // .. .. .. .. .. .. ..
+:Xorr
+# if exactly one input is 0, all &0 get filled and 01 returns
+# Otherwise, 00 is returned 
+}0 }1 00 .. @0 01
+=0 =0 >0 .. .. &0
+&0 // &0 @0 \\ {0
+#include dec_out.mbl
