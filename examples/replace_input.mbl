@@ -14,4 +14,4 @@ Bd if
 =0 &0
 &1 \/
 \/ ..
-#include bit_diff.mbl
+#include logical_operations.mbl
