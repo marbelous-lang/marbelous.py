@@ -36,9 +36,5 @@ Nt /\ \\ >0 &1
 {> }0 .. &0 ..
 &0 /\ &1 !! //
 {0 .. {< .. ..
-:Nt
-# {0 = (}0==0)
-}0 ..
-=0 ?0
-++ {0
-{0 ..
+# for Nt which is logical not
+#include logical_operations.mbl

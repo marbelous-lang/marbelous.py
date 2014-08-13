@@ -1,3 +1,5 @@
+..
+
 # shift left with overflow out only
 :Sl
 }0 }0
@@ -18,23 +20,25 @@
 
 # shift right with overflow out only
 :Sr
-}0 }0
->> ^0
-{0 {>
+}0 }0 80
+>> ^7 &0
+{0 =1 {>
+.. &0 ..
+.. \/ ..
 
 # shift right with overflow in only
 :Shri
-80 }1 }0
-&1 >> >0
-{1 // &1
-.. .. \/
+.. }1
+}0 >>
+\\ {1
 
 # shift right with overflow in and out
 :Shro
-80 }1 .. }0
-&1 Sr {> >0
-{1 // .. &1
-.. .. .. \/
+.. }1 }1 80
+}0 >> ^7 &0
+\\ {1 =1 {>
+.. .. &0 ..
+.. .. \/ ..
 
 # extract the nth bit from a byte
 :Bitx

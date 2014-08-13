@@ -3,7 +3,7 @@
 }0 ..
 Fb ..
 Dp ..
-#
+
 :Fb
 }0 }0 }0 .. # three copies of }0, call them A B C
 -- &0 >1 {0 # decrement A, hold B for sync, return C if it's <2
@@ -11,5 +11,5 @@ Dp ..
 -- Fb &0 {0 # decrement A, recurse with B, release sync or return C-1
 Fb .. \/ .. # recurse with A, do nothing with B, trash C
 \\ {0 .. .. # add A to B and return it
-#
+
 #include dec_out.mbl

@@ -259,9 +259,11 @@ class Board:
             if not board.tick():
                 for location, value in board.get_output_values().items():
                     if location == -1:
-                        put_immediate(y, x-1, value)
+                        if x-1 >= 0:
+                            put_immediate(y, x-1, value)
                     elif location == -2:
-                        put_immediate(y, x+board.function_width, value)
+                        if x+board.function_width < self.board_w:
+                            put_immediate(y, x+board.function_width, value)
                     else:
                         if y == self.board_h-1:
                             if options['verbose'] > 0:
