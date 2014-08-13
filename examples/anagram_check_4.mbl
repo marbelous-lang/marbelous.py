@@ -1,5 +1,10 @@
+}0 }1 }2 }3 }4 }5 }6 }7
+An ag ra mc he ck fo ur
+Hp
+
 # compares two four-byte sets
 # returns 1 if they are anagrams of each other, 0 otherwise
+:Anagramcheckfour
 }0 }1 }2 }3 }4 }5 }6 }7 00 .. 01 # 8 inputs and the potential output values 00/01
 So rt So rt So rt So rt &0 .. &1 # start bubble sorting the inputs, also hold output values in syncs
 .. So rt .. .. So rt .. {0 @4 {0 # continue bubble sorting the inputs, output the result, begin adding up comparison results
@@ -10,32 +15,6 @@ So rt So rt So rt So rt @7 &2 .. # last round of bubble sort, more comparison re
 .. .. .. .. .. .. .. .. \\ >3 &0 # check if all four comparisons were true, release an output sync
 Eq al Eq al Eq al Eq al .. &1 .. # check if each sorted input is equal to its neighbor
 @4 .. @5 .. @6 .. @7 .. .. \/ \/ # send equality results over to be added up
-:Sort
-# sorts two inputs
-.. .. }0 .. .. }1 .. ..
-.. .. /\ Gt eq /\ .. ..
-&0 /\ &1 =0 &1 &0 /\ &1
-{0 .. {1 &0 .. {1 .. {0
-.. .. .. \/ .. .. .. ..
-:Gteq
-# if }0>=}1 then {0=1 else {0=0
-# decrements both inputs repeatedly
-# when }1 reaches zero, release a 1 output
-# when }0 reaches zero, release a 0 output
-@0 00 @1 01
-}0 &0 }1 &1
--- {0 -- {0
->0 &0 >0 &1
-@0 \/ @1 \/
-:Eqal
-# if }0==}1 then {0=1 else {0=0
-# decrements both inputs repeatedly
-# when either reaches zero, release a zero output
-# if both reach zero, also release a 1 output, which gets added to the 0
-.. 00 .. 00 01
-@0 &0 @1 &1 &2
-}0 .. }1 .. {0
--- {0 -- {0 ..
->0 &0 >0 &1 ..
-@0 &2 @1 &2 ..
-.. \/ .. \/ ..
+
+#include logical_operations.mbl
+#include hex_out.mbl

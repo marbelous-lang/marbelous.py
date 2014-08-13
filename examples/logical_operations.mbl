@@ -1,4 +1,6 @@
-..
+}0 }1
+Cm pr
+Hp
 
 :Tf
 # return a>0;
@@ -35,7 +37,7 @@ Nt ..
 {0 ..
 
 :Xorr
-# return x^b
+# return (a>0)^(b>0)
 01 01 }0 .. }1 .. 00
 &0 &1 >0 &1 >0 &2 ..
 &2 &3 &0 .. &3 .. ..
@@ -57,6 +59,13 @@ Nt ..
 >0 &1
 -- &2
 @1 ..
+
+:Eqal
+}0 }1
+Bd if
+=0 ?0
+++ {0
+{0 ..
 
 :Gteq
 }0 }1
@@ -87,3 +96,13 @@ Cm pr
 ?0 ++
 {0 {0
 
+# sorts two inputs, lesser on the left
+:Sort
+}0 }0 }0 }1 }1 }1
+&0 &1 Gt eq &0 &1
+{0 {1 =0 &1 {1 {0
+.. .. &0 \/ .. ..
+.. .. \/ .. .. ..
+
+#include hex_out.mbl
+#include bitwise_operations.mbl

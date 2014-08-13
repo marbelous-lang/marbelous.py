@@ -472,24 +472,28 @@ class Board:
 
 # the boards array contains pristine instances of boards from the source
 boards = {}
+files_included = set()
 
 def load_mbl_file(filename,ignore_main=True):
     lines = []
-    main_skipped = False
-    with open(filename) as f:
-        for line in f.readlines():
-            line = line.rstrip()
-            if len(line)>9 and line[0:9] == "#include ":
-                script_dir = os.path.dirname(options['file'])
-                lines.extend(load_mbl_file(os.path.join(script_dir,line[9:])))
-            if ignore_main and not main_skipped:
-                if len(line) > 0 and line[0] == ':':
-                    main_skipped = True
-                else:
+    if filename not in files_included:
+        files_included.add(filename)
+        main_skipped = False
+        with open(filename) as f:
+            for line in f.readlines():
+                line = line.rstrip()
+                if len(line)>9 and line[0:9] == "#include ":
+                    script_dir = os.path.dirname(options['file'])
+                    include_file = line[9:]
+                    lines.extend(load_mbl_file(os.path.join(script_dir,include_file)))
+                if ignore_main and not main_skipped:
+                    if len(line) > 0 and line[0] == ':':
+                        main_skipped = True
+                    else:
+                        continue
+                if len(line)<2 or line[0] == '#':  # comment
                     continue
-            if len(line)<2 or line[0] == '#':  # comment
-                continue
-            lines.append(line)
+                lines.append(line)
     return lines
 
 loaded_lines = load_mbl_file(options['file'],ignore_main=False)

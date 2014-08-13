@@ -50,3 +50,15 @@
 }1 }1 }1 }1 }1 }1 }1 }1
 =0 =1 =2 =3 =4 =5 =6 =7
 &0 &1 &2 &3 &4 &5 &6 &7
+
+:Bdif
+# returns the amount of bits that differ between two marbles
+# 0 means equality
+}0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1 }0 }1
+^0 ^0 ^1 ^1 ^2 ^2 ^3 ^3 ^4 ^4 ^5 ^5 ^6 ^6 ^7 ^7 # mask out individual bits of }0 and }1
+Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr Xo rr # feed them into Xorr
+\\ @0 // @0 \\ .. // .. \\ .. // @1 \\ @1 // .. # add the results together
+.. .. .. \\ @2 // @2 .. @3 \\ @3 // .. .. .. ..
+.. .. .. .. .. .. \\ {0 // .. .. .. .. .. .. ..
+
+#include logical_operations.mbl
