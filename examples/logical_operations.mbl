@@ -64,12 +64,12 @@ Bi gr Bi gr Bi gr Bi gr ..
 # one bit comparison helper for Cmpr
 :Bigr
 # return (a>b)?1:((a<b)?-1:nothing);
-}0 }1 }0 ..
-.. =1 .. }1
-.. &0 .. //
-.. FF =1 !!
-.. &0 \/ ..
-{0 \\ \\ {0
+}0 .. }1 ..
+=0 &2 =0 &3
+&0 FF &1 01
+\/ &0 \/ &1
+.. &3 .. &2
+.. {0 .. {0
 
 :Eqal
 }0 }1
