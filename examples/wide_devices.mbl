@@ -1,0 +1,39 @@
+}0 }1 }2 }3 }4
+Wb it fe tc hx
+Hp .. .. ..
+.. Hp .. ..
+.. .. Hp ..
+.. .. .. Hp
+
+:Wideadditionfunc
+}0 }4 .. }1 }5 .. }2 }6 .. }3 }7
+Ad df ul Ad df ul Ad df ul Ad do
+{0 .. .. {1 .. .. {2 .. .. {3 ..
+
+:Widesubtractfunc
+}0 }4 .. }1 }5 .. }2 }6 .. }3 }7
+Su bf ul Su bf ul Su bf ul Su bb
+{0 .. .. {1 .. .. {2 .. .. {3 ..
+
+:Wbitleft
+}0 .. }1 .. }2 .. }3
+Sh lo Sh lo Sh lo Sl
+{0 .. {1 .. {2 .. {3
+
+:Wbitrght
+}0 .. }1 .. }2 .. }3
+Sr Sh ro Sh ro Sh ro
+{0 .. {1 .. {2 .. {3
+
+:Wbitfetchx
+.. }4 .. .. .. .. .. ..
+\/ >O \\ >F \\ >7 \\ ..
+}0 -O }1 -G }2 -8 }3 ..
+Bi tx Bi tx Bi tx Bi tx
+{0 .. {0 .. {0 .. {0 ..
+
+#Widemultiplyfunc
+
+#include arithmetic.mbl
+#include bitwise_operations.mbl
+#include hex_out.mbl

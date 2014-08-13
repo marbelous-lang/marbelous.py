@@ -1,0 +1,89 @@
+..
+
+:Tf
+# return a>0;
+01 }0
+.. =0
+\\ {0
+
+:Nt
+# return !a;
+00 }0
+.. >0
+\\ {0
+
+:Orrr
+# return a||b
+}0 }1 ..
+\\ >0 ?0
+.. ?0 ..
+.. ++ ..
+.. {0 //
+
+:Andd
+# return a&&b
+}0 }1 01
+=0 =0 ..
+{0 {0 ..
+.. .. {0
+
+:Norr
+# return !(a||b)
+}0 }1
+Or rr
+Nt ..
+{0 ..
+
+:Xorr
+# return x^b
+01 01 }0 .. }1 .. 00
+&0 &1 >0 &1 >0 &2 ..
+&2 &3 &0 .. &3 .. ..
+{0 {0 .. .. .. .. {0
+
+:Cmpr
+# return (a>b)?1:((a<b)?-1:0);
+# decrements a and b in a loop
+# outputs when one of them reaches zero
+# outputs are 01 or FF or 01+FF
+.. FF
+@0 &0
+}0 {0
+>0 &0
+-- &2
+@0 01
+@1 &1
+}1 {0
+>0 &1
+-- &2
+@1 ..
+
+:Gteq
+}0 }1
+Cm pr
+>2 ?0
+?0 ++
+{0 {0
+
+:Lteq
+}0 }1
+Cm pr
+=1 ?0
+?0 ++
+{0 {0
+
+:Grtr
+}0 }1
+Cm pr
+=1 ?0
+?0 {0
+++ ..
+{0 ..
+
+:Less
+}0 }1
+Cm pr
+<2 ?0
+?0 ++
+{0 {0
+

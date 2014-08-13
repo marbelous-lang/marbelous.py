@@ -1,0 +1,48 @@
+# shift left with overflow out only
+:Sl
+}0 }0
+<< ^7
+{0 {<
+
+# shift left with overflow in only
+:Shli
+}0 ..
+<< }1
+{0 //
+
+# shift left with overflow in and out
+:Shlo
+.. }0 ..
+{< Sl }1
+.. {0 //
+
+# shift right with overflow out only
+:Sr
+}0 }0
+>> ^0
+{0 {>
+
+# shift right with overflow in only
+:Shri
+80 }1 }0
+&1 >> >0
+{1 // &1
+.. .. \/
+
+# shift right with overflow in and out
+:Shro
+80 }1 .. }0
+&1 Sr {> >0
+{1 // .. &1
+.. .. .. \/
+
+# extract the nth bit from a byte
+:Bitx
+# }0 is the byte, }1 is the bit index, 0 is LSB
+}0 }0 }0 }0 }0 }0 }0 }0
+&0 &1 &2 &3 &4 &5 &6 &7
+^0 ^1 ^2 ^3 ^4 ^5 ^6 ^7
+{0 {0 {0 {0 {0 {0 {0 {0
+}1 }1 }1 }1 }1 }1 }1 }1
+=0 =1 =2 =3 =4 =5 =6 =7
+&0 &1 &2 &3 &4 &5 &6 &7
