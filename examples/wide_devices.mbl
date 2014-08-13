@@ -1,7 +1,9 @@
-}0 }1
-Mu lx
-Hp ..
+}0 }1 }2 }3 }4 }5 }6 }7
+Wi de mu lt ip ly fu nc
+Hp
 .. Hp
+.. .. Hp
+.. .. .. Hp
 
 :Wideadditionfunc
 }0 }4 .. }1 }5 .. }2 }6 .. }3 }7
@@ -32,49 +34,67 @@ Bi tx Bi tx Bi tx Bi tx
 
 # 8 bit multiply, 16 bit result
 :Mulx
-}0 }0 }0 }0 }0 }0 }0 }0 ..
-^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0 ..
-=1 =1 =1 =1 =1 =1 =1 =1 \/
-&7 &6 &5 &4 &3 &2 &1 &0 ..
-\/ \/ \/ \/ \/ \/ \/ \/ ..
-.. .. }1 .. .. }1 .. .. }1
-00 .. &5 00 .. &6 00 .. &7
-Sh li Sl Sh li Sl Sh li Sl
-Sh li Sl Sh li Sl Sh li Sl
-Sh li Sl Sh li Sl Sh li Sl
-Sh li Sl Sh li Sl Sh li Sl
-Sh li Sl Sh li Sl Sh li Sl
-{0 .. @5 Sh li Sl Sh li Sl
-.. .. }1 {0 .. @7 Sh li Sl
-00 .. &4 .. .. }1 {0 .. @6
-Sh li Sl 00 .. &3 .. .. }1
-Sh li Sl Sh li Sl 00 .. &2
-Sh li Sl Sh li Sl Sh li Sl
-Sh li Sl Sh li Sl Sh li Sl
-{0 .. @4 {0 }1 @3 {0 }1 @2
-.. .. 00 .. &1 00 @4 &0 ..
-00 00 Sh li Sl {0 .. @0 ..
-.. .. {0 @A .. @0 .. .. ..
-.. .. .. \\ .. .. @B .. ..
-.. .. .. .. Ad do /\ .. ..
-.. .. .. .. .. @2 .. // ..
-.. .. .. .. Ad do /\ .. ..
-.. .. .. .. .. @3 .. // ..
-@A @B .. .. Ad do /\ .. ..
-.. .. .. .. .. @4 .. // ..
-.. .. .. .. Ad do /\ .. ..
-.. .. .. .. .. @5 .. // ..
-.. .. .. .. Ad do /\ .. ..
-.. .. .. .. .. @6 .. // ..
-.. .. .. .. Ad do /\ .. ..
-.. .. .. .. .. @7 .. // ..
-.. .. .. {0 Ad do // .. ..
-.. .. .. .. {1 .. .. .. ..
+}0 }0 }0 }0 }0 }0 }0 }0
+^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0
+=1 =1 =1 =1 =1 =1 =1 =1
+&7 &6 &5 &4 &3 &2 &1 &0
+\/ \/ \/ \/ \/ \/ \/ \/
+.. 00 .. .. .. }1 ..
+&0 /\ Sh li Sl /\ &0
+{0 .. // .. \\ .. @0
+&1 /\ Sh li Sl /\ &1
+{0 .. // .. \\ .. @1
+&2 /\ Sh li Sl /\ &2
+{0 .. // .. \\ .. @2
+&3 /\ Sh li Sl /\ &3
+{0 .. // .. \\ .. @3
+&4 /\ Sh li Sl /\ &4
+{0 .. // .. \\ .. @4
+&5 /\ Sh li Sl /\ &5
+{0 .. // .. \\ .. @5
+&6 /\ Sh li Sl /\ &6
+{0 .. // .. \\ .. @6
+&7 // .. .. .. \\ &7
+{0 @A @0 @1 @B .. @7
+.. \\ .. .. .. .. 00
+.. .. Ad do /\ .. ..
+.. .. .. @2 .. // ..
+.. .. Ad do /\ .. ..
+.. .. .. @3 .. // ..
+.. .. Ad do /\ .. ..
+.. .. .. @4 .. // ..
+.. .. Ad do /\ .. ..
+.. .. .. @5 .. // ..
+.. .. Ad do /\ .. ..
+.. .. .. @6 .. // ..
+.. .. Ad do /\ .. ..
+.. .. .. @7 .. // ..
+.. {0 Ad do // .. ..
+.. .. {1 .. .. .. //
+.. .. .. .. @A /\ @B
 
+# 16 bit multiply, 32 bit result
+:Doblmult
+}0 }2 }0 }3 }1 }2 }1 }3
+Mu lx Mu lx Mu lx Mu lx
+.. @0 @1 @2 @3 @4 @5 ..
+.. @0 @1 @3 .. .. .. ..
+.. Ad df ul .. .. .. ..
+.. .. .. .. @2 @4 @5 ..
+{0 Ad do // Ad df ul {3
+.. {1 .. .. {2 .. .. ..
 
-#Halfmultiplyfunc
-
-#Widemultiplyfunc
+# 32 bit multiply, 32 bit result
+:Widemultiplyfunc
+}0 }1 }6 }7 }2 }3 }4 }5 
+Do bl mu lt Do bl mu lt
+\/ \/ @2 @3 \/ \/ @0 @1
+@2 @3 00 00 @0 @1 00 00
+Wi de ad di ti on fu nc
+.. .. .. .. }2 }3 }6 }7
+.. .. .. .. Do bl mu lt
+Wi de ad di ti on fu nc
+{0 {1 {2 {3 .. .. .. ..
 
 #include arithmetic.mbl
 #include bitwise_operations.mbl
