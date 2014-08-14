@@ -531,9 +531,14 @@ board.populate_inputs(dict(enumerate([int(x) for x in options['inputs']])))
 if options['verbose'] > 2:
     board.display_tick()
 
+total_ticks = 1
 while board.tick():# and board.tick_count < 10000:
+    total_ticks += 1
     if options['verbose'] > 2:
         board.display_tick()
+
+if options['verbose'] > 1:
+    board.printr("Total ticks across all boards: " + str(total_ticks))
 
 if options['verbose'] > 0:
     board.printr("STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
