@@ -2,11 +2,17 @@
 
 import os
 import sys
-import copy
-import random
-import argparse
+import copy     # to duplicate board objects
+import random   # for portals and random devices
+import argparse # for command line arguments
+import termios  # for unbuffered stdin
+from threading import Thread # for non-blocking stdin
+try:
+    from Queue import Queue, Empty # for non-blocking stdin
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
 
-stdin_data = list(sys.stdin.read())[::-1]
+
 
 oct_digits = '01234567'
 hex_digits = '0123456789ABCDEF'
@@ -28,6 +34,36 @@ parser.add_argument('--stderr', dest='stderr', action='store_true',
 options = vars(parser.parse_args())
 
 verbose_stream = sys.stderr if options['stderr'] else sys.stdout
+
+def unbuffered_getch(stream):
+    try:
+        import msvcrt
+    except:
+        fd = stream.fileno()
+        # temporarily unbuffer stdin if it's a tty
+        if os.isatty(fd):
+            old_settings = termios.tcgetattr(fd)
+            new_settings = termios.tcgetattr(fd)
+            try:
+                new_settings[3] = new_settings[3] & ~termios.ICANON # leave canonical mode
+                termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+                ch = stream.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSANOW, old_settings)
+        else:
+            ch = stream.read(1)
+    else:
+        ch = msvcrt.getch()
+    return ch
+
+def enqueue_input(stream, queue):
+    for char in iter(lambda:unbuffered_getch(stream), b''):
+        queue.put(char)
+
+stdin_queue = Queue()
+stdin_thread = Thread(target=enqueue_input, args=(sys.stdin, stdin_queue))
+stdin_thread.daemon = True # thread dies with the program
+stdin_thread.start()
 
 devices = set([
     '  ',
@@ -223,9 +259,11 @@ class Board:
             if not board.tick():
                 for location, value in board.get_output_values().items():
                     if location == -1:
-                        put_immediate(y, x-1, value)
+                        if x-1 >= 0:
+                            put_immediate(y, x-1, value)
                     elif location == -2:
-                        put_immediate(y, x+board.function_width, value)
+                        if x+board.function_width < self.board_w:
+                            put_immediate(y, x+board.function_width, value)
                     else:
                         if y == self.board_h-1:
                             if options['verbose'] > 0:
@@ -294,11 +332,13 @@ class Board:
                         d = 1
                         m = ~m
                     elif i == ']]': # invert bits / logical not
-                        if len(stdin_data):
-                            m = ord(stdin_data.pop())
-                            d = 1
-                        else:
+                        try:
+                            char = stdin_queue.get_nowait()
+                        except Empty: # no bytes pending from stdin
                             r = 1
+                        else: # got a byte from stdin
+                            m = ord(char)
+                            d = 1
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
                         s = int(i[1], 8)
                         d = 1
@@ -432,24 +472,28 @@ class Board:
 
 # the boards array contains pristine instances of boards from the source
 boards = {}
+files_included = set()
 
 def load_mbl_file(filename,ignore_main=True):
     lines = []
-    main_skipped = False
-    with open(filename) as f:
-        for line in f.readlines():
-            line = line.rstrip()
-            if len(line)>9 and line[0:9] == "#include ":
-                script_dir = os.path.dirname(options['file'])
-                lines.extend(load_mbl_file(os.path.join(script_dir,line[9:])))
-            if ignore_main and not main_skipped:
-                if len(line) > 0 and line[0] == ':':
-                    main_skipped = True
-                else:
+    if filename not in files_included:
+        files_included.add(filename)
+        main_skipped = False
+        with open(filename) as f:
+            for line in f.readlines():
+                line = line.rstrip()
+                if len(line)>9 and line[0:9] == "#include ":
+                    script_dir = os.path.dirname(options['file'])
+                    include_file = line[9:]
+                    lines.extend(load_mbl_file(os.path.join(script_dir,include_file)))
+                if ignore_main and not main_skipped:
+                    if len(line) > 0 and line[0] == ':':
+                        main_skipped = True
+                    else:
+                        continue
+                if len(line)<2 or line[0] == '#':  # comment
                     continue
-            if len(line)<2 or line[0] == '#':  # comment
-                continue
-            lines.append(line)
+                lines.append(line)
     return lines
 
 loaded_lines = load_mbl_file(options['file'],ignore_main=False)
