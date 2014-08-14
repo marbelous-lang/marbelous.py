@@ -12,8 +12,8 @@ Hp
 # return !a;
 }0 ..
 =0 ?0
-++ ..
-{0 //
+++ {0
+{0 ..
 
 :Lorr
 # return a||b
@@ -82,39 +82,44 @@ Bd if
 :Gteq
 }0 }1
 Cm pr
->2 ?0
-?0 ++
-{0 {0
+>2 &0
+?0 01
+{0 &0
+.. {0
 
 :Lteq
 }0 }1
 Cm pr
-=1 ?0
-?0 ++
-{0 {0
+=1 &0
+?0 01
+{0 &0
+.. {0
 
 :Grtr
 }0 }1
 Cm pr
 =1 ?0
-?0 {0
-++ ..
-{0 ..
+{0 {0
 
 :Less
 }0 }1
 Cm pr
-<2 ?0
-?0 ++
-{0 {0
+<2 +2
+?0 {0
+{0 ..
 
 # sorts two inputs, lesser on the left
 :Sort
-}0 }0 }0 }1 }1 }1
-&0 &1 Gt eq &0 &1
-{0 {1 =0 &1 {1 {0
-.. .. &0 \/ .. ..
-.. .. \/ .. .. ..
+}0 }1
+Gt eq
+=0 &1
+&0 ..
+}0 }0
+&0 &1
+{0 {1
+}1 }1
+&0 &1
+{1 {0
 
 #include hex_out.mbl
 #include bitwise_operations.mbl
