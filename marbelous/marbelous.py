@@ -5,7 +5,6 @@ import sys
 import copy     # to duplicate board objects
 import random   # for portals and random devices
 import argparse # for command line arguments
-import termios  # for unbuffered stdin
 from threading import Thread # for non-blocking stdin
 try:
     from Queue import Queue, Empty # for non-blocking stdin
@@ -37,8 +36,9 @@ verbose_stream = sys.stderr if options['stderr'] else sys.stdout
 
 def unbuffered_getch(stream):
     try:
-        import msvcrt
+        import msvcrt # for unbuffered stdin
     except:
+        import termios # for unbuffered stdin
         fd = stream.fileno()
         # temporarily unbuffer stdin if it's a tty
         if os.isatty(fd):

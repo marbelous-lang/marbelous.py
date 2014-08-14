@@ -86,15 +86,18 @@ Mu lx Mu lx Mu lx Mu lx
 
 # 32 bit multiply, 32 bit result
 :Widemultiplyfunc
-}0 }1 }6 }7 }2 }3 }4 }5 
-Do bl mu lt Do bl mu lt
-\/ \/ @2 @3 \/ \/ @0 @1
-@2 @3 00 00 @0 @1 00 00
-Wi de ad di ti on fu nc
-.. .. .. .. }2 }3 }6 }7
-.. .. .. .. Do bl mu lt
-Wi de ad di ti on fu nc
-{0 {1 {2 {3 .. .. .. ..
+# uses 8*8=16 or 16*16=32 bit multiply instead if possible
+}0 }1 }6 }7 }2 }3 }4 }5 .. }0 }1 }4 }5 }2 }6 .. }2 }3 }6 }7
+&C &C &C &C &C &C &C &C .. Lo rr Lo rr Lo rr .. &B &B &B &B
+Do bl mu lt Do bl mu lt .. \\ Lo rr .. .. .. .. Do bl mu lt
+\/ \/ @2 @3 \/ \/ @0 @1 .. .. /\ Lo rr // @C .. {0 {1 {2 {3
+@2 @3 00 00 @0 @1 00 00 .. =0 @C =0 \\ Lo rr .. 00 00 }3 }7
+Wi de ad di ti on fu nc .. .. .. &A .. =1 \/ .. &A &A &A &A
+.. .. .. .. }2 }3 }6 }7 .. .. .. \/ .. &C .. .. .. .. Mu lx
+.. .. .. .. &C &C &C &C .. &B .. .. .. \/ .. .. {0 {1 {2 {3
+.. .. .. .. Do bl mu lt .. \/ .. .. .. .. .. .. .. .. .. ..
+Wi de ad di ti on fu nc .. .. .. .. .. .. .. .. .. .. .. ..
+{0 {1 {2 {3 .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
 
 #include arithmetic.mbl
 #include bitwise_operations.mbl
