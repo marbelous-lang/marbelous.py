@@ -10,11 +10,12 @@ Hp
 
 :Nt
 # return !a;
-00 }0
-.. >0
-\\ {0
+}0 ..
+=0 ?0
+++ ..
+{0 //
 
-:Orrr
+:Lorr
 # return a||b
 }0 }1 ..
 \\ >0 ?0
@@ -22,21 +23,21 @@ Hp
 .. ++ ..
 .. {0 //
 
-:Andd
+:Land
 # return a&&b
 }0 }1 01
 =0 =0 ..
 {0 {0 ..
 .. .. {0
 
-:Norr
+:Lnor
 # return !(a||b)
 }0 }1
-Or rr
+Lo rr
 Nt ..
 {0 ..
 
-:Xorr
+:Lxor
 # return (a>0)^(b>0)
 01 01 }0 .. }1 .. 00
 &0 &1 >0 &1 >0 &2 ..
