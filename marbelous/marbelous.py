@@ -29,6 +29,8 @@ parser.add_argument('-v', '--verbose', dest='verbose', action='count', default=0
                     help='operate in verbose mode, -vv -vvv -vvvv increase verbosity')
 parser.add_argument('--stderr', dest='stderr', action='store_true',
                     help='send verbose output to stderr instead of stdout')
+parser.add_argument('-m', metavar='W', dest='memoize_width', action='store', type=int, default=2,
+                    help='maximum function width to memoize')
 
 options = vars(parser.parse_args())
 
@@ -216,7 +218,7 @@ class Board:
                 exit(1)
 
     def populate_inputs(self, inputs):
-        if len(self.inputs) <= 2:
+        if len(self.inputs) <= options['memoize_width']:
             self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
             if value is not None:
@@ -262,7 +264,7 @@ class Board:
             y, x = coordinates
             if not board.tick():
                 outputs = board.get_output_values()
-                if len(board.inputs) <= 2:
+                if len(board.inputs) <= options['memoize_width']:
                     boards[board.name].memoize[board.memoizing_inputs] = outputs
                 for location, value in outputs.items():
                     if location == -1:
@@ -457,7 +459,7 @@ class Board:
                 inputs = {}
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
-                if len(sub_board.inputs) <= 2 and tuple(inputs.items()) in sub_board.memoize:
+                if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize:
                     outputs = sub_board.memoize[tuple(inputs.items())]
                     for location, value in outputs.items():
                         if location == -1:
