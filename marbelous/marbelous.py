@@ -114,6 +114,7 @@ class Board:
         self.function_queue = []
         self.memoize = {}
         self.memoizing_inputs = {}
+        self.has_stdin = False
 
     def __repr__(self):
         return "Board name=" + self.name + " tick=" + str(self.tick_count)
@@ -189,6 +190,8 @@ class Board:
                         if num not in self.outputs:
                             self.outputs[num] = []
                         self.outputs[num].append((y, x))
+                    elif b == ']]':
+                        self.has_stdin = True
         self.marbles = mbl
         self.devices = dev
         self.function_width = 1
@@ -218,7 +221,7 @@ class Board:
                 exit(1)
 
     def populate_inputs(self, inputs):
-        if len(self.inputs) <= options['memoize_width']:
+        if len(self.inputs) <= options['memoize_width'] and not self.has_stdin:
             self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
             if value is not None:
@@ -264,7 +267,7 @@ class Board:
             y, x = coordinates
             if not board.tick():
                 outputs = board.get_output_values()
-                if len(board.inputs) <= options['memoize_width']:
+                if len(board.inputs) <= options['memoize_width'] and not board.has_stdin:
                     boards[board.name].memoize[board.memoizing_inputs] = outputs
                 for location, value in outputs.items():
                     if location == -1:
@@ -459,7 +462,7 @@ class Board:
                 inputs = {}
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
-                if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize:
+                if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize and not sub_board.has_stdin:
                     outputs = sub_board.memoize[tuple(inputs.items())]
                     for location, value in outputs.items():
                         if location == -1:
