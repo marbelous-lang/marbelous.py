@@ -110,6 +110,8 @@ class Board:
         self.tick_count = 0
         self.name = ''
         self.function_queue = []
+        self.memoize = {}
+        self.memoizing_inputs = {}
 
     def __repr__(self):
         return "Board name=" + self.name + " tick=" + str(self.tick_count)
@@ -214,6 +216,8 @@ class Board:
                 exit(1)
 
     def populate_inputs(self, inputs):
+        if len(self.inputs) <= 2:
+            self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
             if value is not None:
                 for y, x in self.inputs[input_num]:
@@ -257,7 +261,10 @@ class Board:
             board, coordinates = self.function_queue[-1]
             y, x = coordinates
             if not board.tick():
-                for location, value in board.get_output_values().items():
+                outputs = board.get_output_values()
+                if len(board.inputs) <= 2:
+                    boards[board.name].memoize[board.memoizing_inputs] = outputs
+                for location, value in outputs.items():
                     if location == -1:
                         if x-1 >= 0:
                             put_immediate(y, x-1, value)
@@ -447,12 +454,33 @@ class Board:
                     break
             if run:
                 hidden_activity = True
-                self.function_queue.append((copy.deepcopy(sub_board), (y, x)))
                 inputs = {}
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
-                self.function_queue[-1][0].populate_inputs(inputs)
-                self.function_queue[-1][0].recursion_depth = self.recursion_depth+1
+                if len(sub_board.inputs) <= 2 and tuple(inputs.items()) in sub_board.memoize:
+                    outputs = sub_board.memoize[tuple(inputs.items())]
+                    for location, value in outputs.items():
+                        if location == -1:
+                            if x-1 >= 0:
+                                put(y, x-1, value)
+                        elif location == -2:
+                            if x+sub_board.function_width < self.board_w:
+                                put(y, x+sub_board.function_width, value)
+                        else:
+                            if y == self.board_h-1:
+                                if options['verbose'] > 0:
+                                    self.print_out += chr(value)
+                                if options['verbose'] > 1:
+                                    self.printr("STDOUT: " + "0x" + hex(value)[2:].upper().zfill(2) + \
+                                                '/"' + (chr(value) if value > 31 else '?') + '"')
+                                if options['verbose'] == 0 or options['stderr']:
+                                    sys.stdout.write(chr(value))
+                            else:
+                                put(y+1, x+int(location), value)
+                else:
+                    self.function_queue.append((copy.deepcopy(sub_board), (y, x)))
+                    self.function_queue[-1][0].populate_inputs(inputs)
+                    self.function_queue[-1][0].recursion_depth = self.recursion_depth+1
             else:
                 for i in range(sub_board.function_width):
                     if self.marbles[y][x+i] is not None:
