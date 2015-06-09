@@ -1,7 +1,8 @@
+# operates like `cat` but replaces one specific character with another
 .. @0 .. .. @1 .. .. .. ..
 &0 /\ @2 @3 /\ &0 .. .. .. # generates copies of }0 and }1 when needed
-}0 00 @4 .. .. }1 @5 @2 @3 # fetches whatever is in stdin when ready
-@0 &1 /\ ]] \/ @1 &0 &1 &1 # feeds these three marbles to Replac
+}0 00 @4 .. .. }1 @5 .. .. # fetches whatever is in stdin when ready
+@0 .. /\ ]] \/ @1 &0 @2 @3 # feeds these three marbles to Replac
 .. @4 .. @5 .. .. Re pl ac
 :Replac
 # outputs }0 when }0 does not equal }1
@@ -10,7 +11,7 @@
 &0 &1
 {0 {0
 }0 }1
-Bd if
+Bd if # library function that counts differing bits between two marbles
 =0 &0
 &1 \/
 \/ ..

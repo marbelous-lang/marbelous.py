@@ -1,0 +1,4 @@
+# simple `cat` script, echos stdin to stdout
+# does not respect EOF yet
+00 @0 ..
+@0 /\ ]]
