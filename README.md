@@ -15,9 +15,9 @@ First versions of interpreter by sparr.
 Example program (more in examples/):
 
     # calculates the nth fibonacci number, recursively
-    I0 I0 I0 .. # three copies of I0, call them A B C
-    -- S0 <2 O0 # decrement A, hold B for sync, return C if it's <2
-    S0 -- <5 -- # hold A for sync, decrement B, divert and decrement C if it's <5
-    -- MB S0 O0 # decrement A, recurse with B, release sync or return C-1
-    MB .. \/ .. # recurse with A, do nothing with B, trash C
-    \\ O0 .. .. # add A to B and return it
+    }0 }0 }0 .. # three copies of }0, call them A B C
+    -- &0 >1 {0 # decrement A, hold B for sync, return C if it's <2
+    &0 -- >4 -- # hold A for sync, decrement B, divert and decrement C if it's <5
+    -- Fb &0 {0 # decrement A, recurse with B, release sync or return C-1
+    Fb .. \/ .. # recurse with A, do nothing with B, trash C
+    \\ {0 .. .. # add A to B and return it
