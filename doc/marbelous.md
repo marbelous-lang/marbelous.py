@@ -109,6 +109,20 @@ Examples
     -- Fb &0 {0 # decrement A, recurse with B, release sync or return C-1
     Fb .. \/ .. # recurse with A, do nothing with B, trash C
     \\ {0 .. .. # add A to B and return it
+    # pseudocode equivalent:
+    # fib(x):
+    #   A=B=C=x
+    #   A--
+    #   if C<2:
+    #     return C
+    #   B--
+    #   if C<5:
+    #     C--
+    #     return C
+    #   A--
+    #   B=fib(B)
+    #   A=fib(A)
+    #   return A+B
 
 
 Additional examples are available in the [examples directory](https://github.com/marbelous-lang/marbelous.py/tree/master/examples).
