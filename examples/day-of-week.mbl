@@ -1,0 +1,40 @@
+# Takes argument of 1-7, prints out day of the week with 1=>"Monday" and 7->"Sunday"
+# TODO: implement modulus to wrap around numbers outside this range
+
+00 }0 # 00 falls into Da one tick after the input falls into Dw
+.. Dw # output the prefix first
+Da .. # then call the function to output "day"
+
+# print "day" by letting those marbles fall off the bottom of the board
+:Da
+}0
+\/ 64 61 79
+
+# call one of the other seven functions if the input is 1,2,3,4,5,6,7
+:Dw
+}0
+=1 =2 =3 =4 =5 =6 =7 # takes 6 more ticks to get to Su than to Mn :(
+Mn Tu We Th Fr Sa Su
+
+# seven functions to print out prefixes
+:Mn
+}0
+\/ 4D 6F 6E # "Mon"
+:Tu
+}0
+\/ 54 75 65 73 # "Tues"
+:We
+}0
+\/ 57 65 64 6E 65 73 # "Wednes"
+:Th
+}0
+\/ 54 68 75 72 73 # "Thurs"
+:Fr
+}0
+\/ 46 72 69 # "Fri"
+:Sa
+}0
+\/ 53 61 74 75 72 # "Satur"
+:Su
+}0
+\/ 53 75 6E # "Sun"
