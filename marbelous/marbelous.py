@@ -344,11 +344,13 @@ class Board:
                         d = 1
                         m = ~m
                     elif i == ']]': # invert bits / logical not
+                    elif i == ']]': # fetch from stdin
                         try:
                             char = stdin_queue.get_nowait()
                         except Empty: # no bytes pending from stdin
+                        except Empty: # no bytes pending from stdin, divert right
                             r = 1
-                        else: # got a byte from stdin
+                        else: # got a byte from stdin, drop that byte as a marble
                             m = ord(char)
                             d = 1
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
