@@ -1,0 +1,8 @@
+# Takes argument of 1-7, prints out day of the week with 1=>"Monday" and 7->"Sunday"
+# TODO: implement modulus to wrap around numbers outside this range
+}0
+=1 =2 =3 =4 =5 =6 =7 --
+&1 &2 &3 &4 &5 &6 &7 {0 # release one set of marbles from the bottom of the board, or return input-1
+&8 // // // // // // .. # regardless of which set was released, also release set 8
+4D 6F 6E 54 75 65 73 57 65 64 6E 65 73 54 68 75 72 73 46 72 69 53 61 74 75 72 53 75 6E 64 61 79
+&1 &1 &1 &2 &2 &2 &2 &3 &3 &3 &3 &3 &3 &4 &4 &4 &4 &4 &5 &5 &5 &6 &6 &6 &6 &6 &7 &7 &7 &8 &8 &8
