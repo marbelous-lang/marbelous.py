@@ -108,18 +108,5 @@ Cm pr
 ?0 {0
 {0 ..
 
-# sorts two inputs, lesser on the left
-:Sort
-}0 }1
-Gt eq
-=0 &1
-&0 ..
-}0 }0
-&0 &1
-{0 {1
-}1 }1
-&0 &1
-{1 {0
-
 #include hex_out.mbl
 #include bitwise_operations.mbl

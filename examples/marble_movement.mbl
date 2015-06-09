@@ -1,0 +1,22 @@
+# sorts two inputs, lesser on the left
+:Sort
+}0 }1
+Gt eq
+=0 &1
+&0 ..
+}0 }0
+&0 &1
+{0 {1
+}1 }1
+&0 &1
+{1 {0
+
+# drops I0 to O0 if I1 is 0, else diverts I0 to O1
+# TODO: !! one tick sooner when interpreter is better about outputs and !! device
+:Dvrt
+}0 }0 }1 ..
+&0 &1 =0 &1
+{0 {1 &0 ..
+.. .. \\ !!
+
+#include logical_operations.mbl
