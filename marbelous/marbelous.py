@@ -5,6 +5,7 @@ import sys
 import copy     # to duplicate board objects
 import random   # for portals and random devices
 import argparse # for command line arguments
+from collections import deque # for stdout queuing
 from threading import Thread # for non-blocking stdin
 try:
     from Queue import Queue, Empty # for non-blocking stdin
@@ -111,10 +112,11 @@ class Board:
         self.recursion_depth = 0
         self.tick_count = 0
         self.name = ''
-        self.function_queue = []
+        self.function_queue = deque()
         self.memoize = {}
         self.memoizing_inputs = {}
         self.has_stdin = False
+        self.stdout_queue = {}
 
     def __repr__(self):
         return "Board name=" + self.name + " tick=" + str(self.tick_count)
@@ -122,9 +124,30 @@ class Board:
     def printr(self, s):
         verbose_stream.write( (' ' * self.recursion_depth + str(s)) + '\n')
 
+    def write_stdout(self,stdout_str):
+        # print "write_stdout", self
+        if stdout_str:
+            if options['verbose'] > 0:
+                self.print_out += stdout_str
+            if options['verbose'] > 1:
+                self.printr("write_stdout STDOUT: " + ' '.join(["0x" + hex(ord(char))[2:].upper().zfill(2) + \
+                            '/"' + (char if ord(char) > 31 else '?') + '"' for char in stdout_str]))
+            if options['verbose'] == 0 or options['stderr']:
+                sys.stdout.write(stdout_str)
+
+    def queue_stdout(self,y,x,char):
+        self.stdout_queue[(y,x)] = char
+
+    def fetch_stdout(self):
+        string = ''
+        for key, char in sorted(self.stdout_queue.items()):
+            string += char
+        self.stdout_queue = {}
+        return string
+
     def display_tick(self):
         if self.function_queue:
-            board, coordinates = self.function_queue[-1]
+            board, coordinates = self.function_queue[0]
             board.display_tick()
         else:
             self.display()
@@ -136,6 +159,7 @@ class Board:
             for x in range(self.board_w):
                 line += (format_cell(self.marbles[y][x]) if self.marbles[y][x] is not None else format_cell(self.devices[y][x])) + ' '
             self.printr(line)
+        self.printr('')
 
     def parse(self, input):
         board = []
@@ -253,17 +277,15 @@ class Board:
         return True
 
     def tick(self):
-        if self.all_outputs_filled() and not self.function_queue:
-            if options['verbose'] > 1:
-                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled { devices")
-            return False
-
         mbl = self.marbles
         def put_immediate(y, x, m):
-            mbl[y][x] = (m % 256) if not mbl[y][x] else (mbl[y][x]+m) % 256
+            if x >= 0 and x<self.board_w and y>0:
+                if y<self.board_h:
+                    mbl[y][x] = (m % 256) if not mbl[y][x] else (mbl[y][x]+m) % 256
+                else:
+                    self.queue_stdout(y,x,chr(m))
         if self.function_queue:
-            #TODO: use a deque so we can run functions in "correct" order
-            board, coordinates = self.function_queue[-1]
+            board, coordinates = self.function_queue[0]
             y, x = coordinates
             if not board.tick():
                 outputs = board.get_output_values()
@@ -271,27 +293,24 @@ class Board:
                     boards[board.name].memoize[board.memoizing_inputs] = outputs
                 for location, value in outputs.items():
                     if location == -1:
-                        if x-1 >= 0:
-                            put_immediate(y, x-1, value)
+                        put_immediate(y, x-1, value)
                     elif location == -2:
-                        if x+board.function_width < self.board_w:
-                            put_immediate(y, x+board.function_width, value)
+                        put_immediate(y, x+board.function_width, value)
                     else:
-                        if y == self.board_h-1:
-                            if options['verbose'] > 0:
-                                self.print_out += chr(value)
-                            if options['verbose'] > 1:
-                                self.printr("STDOUT: " + "0x" + hex(value)[2:].upper().zfill(2) + \
-                                            '/"' + (chr(value) if value > 31 else '?') + '"')
-                            if options['verbose'] == 0 or options['stderr']:
-                                sys.stdout.write(chr(value))
-                        else:
-                            put_immediate(y+1, x+int(location), value)
-                self.function_queue.pop()
-                self.print_out += board.print_out
+                        put_immediate(y+1, x+int(location), value)
+                self.function_queue.popleft()
+                self.stdout_queue[(y,x)] = board.print_out
                 if options['verbose'] > 2:
                     board.display()
             return True
+
+        if self.stdout_queue:
+            self.write_stdout(self.fetch_stdout())
+
+        if self.all_outputs_filled():
+            if options['verbose'] > 1:
+                self.printr("Exiting board " + str(self.name) + " on tick " + str(self.tick_count) + " due to filled { devices")
+            return False
 
         self.tick_count += 1
         dev = self.devices
@@ -301,9 +320,12 @@ class Board:
         hidden_activity = False
 
         def put(y, x, m):
-            nmb[y][x] = (m % 256) if not nmb[y][x] else (nmb[y][x]+m) % 256
+            if x >= 0 and x<self.board_w and y>0:
+                if y<self.board_h:
+                    nmb[y][x] = (m % 256) if not nmb[y][x] else (nmb[y][x]+m) % 256
+                else:
+                    self.queue_stdout(y,x,chr(m))
 
-        #TODO: queue print_out and sort it correctly with function print_out
         # process each marble
         for y in range(self.board_h):
             for x in range(self.board_w):
@@ -343,11 +365,9 @@ class Board:
                     elif i == '~~': # invert bits / logical not
                         d = 1
                         m = ~m
-                    elif i == ']]': # invert bits / logical not
                     elif i == ']]': # fetch from stdin
                         try:
                             char = stdin_queue.get_nowait()
-                        except Empty: # no bytes pending from stdin
                         except Empty: # no bytes pending from stdin, divert right
                             r = 1
                         else: # got a byte from stdin, drop that byte as a marble
@@ -434,23 +454,11 @@ class Board:
                 new_y = new_y if new_y is not None else y
                 new_x = new_x if new_x is not None else x
                 if d:
-                    if new_y == self.board_h-1:
-                        if options['verbose'] > 0:
-                            self.print_out += chr(m)
-                        if options['verbose'] > 1:
-                            self.printr("STDOUT: " + "0x" + hex(m)[2:].upper().zfill(2) + \
-                                        '/"' + (chr(m) if m > 31 else '?') + '"')
-                        if options['verbose'] == 0 or options['stderr']:
-                            sys.stdout.write(chr(m))
-                        hidden_activity = True
-                    else:
-                        put(new_y+1, new_x, m)
+                    put(new_y+1, new_x, m)
                 if r:
-                    if new_x < self.board_w-1:
-                        put(new_y, new_x+1, m)
+                    put(new_y, new_x+1, m)
                 if l:
-                    if new_x > 0:
-                        put(new_y, new_x-1, m)
+                    put(new_y, new_x-1, m)
 
         for y, x, name in self.functions:
             run = True
@@ -468,22 +476,11 @@ class Board:
                     outputs = sub_board.memoize[tuple(inputs.items())]
                     for location, value in outputs.items():
                         if location == -1:
-                            if x-1 >= 0:
-                                put(y, x-1, value)
+                            put(y, x-1, value)
                         elif location == -2:
-                            if x+sub_board.function_width < self.board_w:
-                                put(y, x+sub_board.function_width, value)
+                            put(y, x+sub_board.function_width, value)
                         else:
-                            if y == self.board_h-1:
-                                if options['verbose'] > 0:
-                                    self.print_out += chr(value)
-                                if options['verbose'] > 1:
-                                    self.printr("STDOUT: " + "0x" + hex(value)[2:].upper().zfill(2) + \
-                                                '/"' + (chr(value) if value > 31 else '?') + '"')
-                                if options['verbose'] == 0 or options['stderr']:
-                                    sys.stdout.write(chr(value))
-                            else:
-                                put(y+1, x+int(location), value)
+                            put(y+1, x+int(location), value)
                 else:
                     self.function_queue.append((copy.deepcopy(sub_board), (y, x)))
                     self.function_queue[-1][0].populate_inputs(inputs)
@@ -576,7 +573,7 @@ if options['verbose'] > 1:
     board.printr("Total ticks across all boards: " + str(total_ticks))
 
 if options['verbose'] > 0:
-    board.printr("STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
+    board.printr("Combined STDOUT: " + ' '.join(["0x" + hex(ord(v))[2:].upper().zfill(2) + \
                 '/"' + (v if ord(v) > 31 else '?') + '"' \
                 for v in board.print_out]))
 
@@ -597,3 +594,5 @@ if options['return']:
         else:
             exit_code = 0
         exit(exit_code)
+
+print
