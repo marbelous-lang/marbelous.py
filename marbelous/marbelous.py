@@ -290,7 +290,7 @@ class Board:
             if not board.tick():
                 outputs = board.get_output_values()
                 if len(board.inputs) <= options['memoize_width'] and not board.has_stdin:
-                    boards[board.name].memoize[board.memoizing_inputs] = outputs
+                    boards[board.name].memoize[board.memoizing_inputs] = (outputs,board.fetch_stdout())
                 for location, value in outputs.items():
                     if location == -1:
                         put_immediate(y, x-1, value)
@@ -473,7 +473,7 @@ class Board:
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
                 if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize and not sub_board.has_stdin:
-                    outputs = sub_board.memoize[tuple(inputs.items())]
+                    outputs = sub_board.memoize[tuple(inputs.items())][0]
                     for location, value in outputs.items():
                         if location == -1:
                             put(y, x-1, value)
@@ -481,6 +481,7 @@ class Board:
                             put(y, x+sub_board.function_width, value)
                         else:
                             put(y+1, x+int(location), value)
+                    self.write_stdout(self.fetch_stdout())
                 else:
                     self.function_queue.append((copy.deepcopy(sub_board), (y, x)))
                     self.function_queue[-1][0].populate_inputs(inputs)
