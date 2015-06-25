@@ -559,7 +559,7 @@ if len(options['inputs']) != len(board.inputs):
     sys.stderr.write(options['file'] + " expects " + str(len(board.inputs)) + " inputs, you gave " + str(len(options['inputs'])) + "\n")
     exit(1)
 
-board.populate_inputs(dict(enumerate([int(x) for x in options['inputs']])))
+board.populate_inputs(dict(enumerate([(int(x) if x.isdigit() else ord(x)) for x in options['inputs']])))
 
 if options['verbose'] > 2:
     board.display_tick()
