@@ -116,6 +116,7 @@ class Board:
         self.memoize = {}
         self.memoizing_inputs = {}
         self.has_stdin = False
+        self.has_stdout = False
         self.stdout_queue = {}
 
     def __repr__(self):
@@ -245,7 +246,7 @@ class Board:
                 exit(1)
 
     def populate_inputs(self, inputs):
-        if len(self.inputs) <= options['memoize_width'] and not self.has_stdin:
+        if len(self.inputs) <= options['memoize_width'] and not self.has_stdin and not self.has_stdout:
             self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
             if value is not None:
@@ -289,7 +290,7 @@ class Board:
             y, x = coordinates
             if not board.tick():
                 outputs = board.get_output_values()
-                if len(board.inputs) <= options['memoize_width'] and not board.has_stdin:
+                if len(board.inputs) <= options['memoize_width'] and not board.has_stdin and not board.has_stdout:
                     boards[board.name].memoize[board.memoizing_inputs] = (outputs,board.fetch_stdout())
                 for location, value in outputs.items():
                     if location == -1:
@@ -306,6 +307,7 @@ class Board:
 
         if self.stdout_queue:
             self.write_stdout(self.fetch_stdout())
+            boards[self.name].has_stdout = True
 
         if self.all_outputs_filled():
             if options['verbose'] > 1:
@@ -472,7 +474,7 @@ class Board:
                 inputs = {}
                 for i in range(sub_board.function_width):
                     inputs[i] = self.marbles[y][x+i]
-                if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize and not sub_board.has_stdin:
+                if len(sub_board.inputs) <= options['memoize_width'] and tuple(inputs.items()) in sub_board.memoize and not sub_board.has_stdin and not sub_board.has_stdout:
                     outputs = sub_board.memoize[tuple(inputs.items())][0]
                     for location, value in outputs.items():
                         if location == -1:
