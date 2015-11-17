@@ -198,6 +198,8 @@ class Board:
                     continue
                 elif b[0] in hex_digits and b[1] in hex_digits:
                     mbl[y][x] = int(b, 16)
+                elif b[0] == "'":
+                    mbl[y][x] = ord(b[1])
                 else:
                     dev[y][x] = b
                     if b[0] == '}' and b[1] in b36_digits:
