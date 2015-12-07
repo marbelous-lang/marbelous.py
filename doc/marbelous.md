@@ -59,6 +59,8 @@ Functions
 
 The number of inputs and outputs of a cell is implicitly determined by the distinct `}n` and `{n` used.
 
+A function board with no defined inputs takes one input marble to run, but does not use that marble internally.
+
 To use a board as a function, you write its name across max(1,I+1,O+1) horizontally adjacent cells. Where I is the highest input number used and O is the highest output number used (side outputs are not counted). If the board's name is not as long as its device width, the name is repeated.
 
 The main board has the name "MB", to be repeated across as many cells as the main board has inputs.

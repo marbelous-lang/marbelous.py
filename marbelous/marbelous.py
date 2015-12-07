@@ -229,6 +229,8 @@ class Board:
         if self.name != "MB" and (self.function_width*2) % len(self.name) != 0:
             sys.stderr.write("Board name " + str(self.name) + " not a divisor of width " + str(self.function_width) + '\n')
             exit(1)
+        if self.name != "MB" and len(self.inputs) == 0:
+            self.inputs[0] = None
 
     def find_functions(self):
         wide_function_names = dict([(b.name * (2 * b.function_width / len(b.name)), b.name) for b in boards.values()])
@@ -251,7 +253,7 @@ class Board:
         if len(self.inputs) <= options['memoize_width'] and not self.has_stdin and not self.has_stdout:
             self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
-            if value is not None:
+            if value is not None and self.inputs[input_num] is not None:
                 for y, x in self.inputs[input_num]:
                     self.marbles[y][x] = value
 
