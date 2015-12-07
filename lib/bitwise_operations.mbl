@@ -1,0 +1,144 @@
+# bitwise_operations.mbl
+# 8-bit bit manipulation operations
+
+}0 }1 }0 }1
+Bn or Bp .. 0A
+.. 0A .. Bp
+Bp
+
+# Shift left with overflow out only
+# output0 is A<<1
+# left output is (A & 0x80)?1:0
+:Sl
+}0 }0
+<< ^7
+{0 {<
+
+# Shift left with overflow in only
+# output0 is (A<<1) + B
+:Shli
+}0 ..
+<< }1
+{0 //
+
+# Shift left with overflow in and out
+# output0 is (A<<1) + B
+# left output is (A & 0x80)?1:0
+:Shlo
+.. }0 ..
+{< Sl }1
+.. {0 //
+
+# Shift right with overflow out only
+# output0 is A>>1
+# right output is A&1
+:Sr
+}0 }0
+>> ^0
+{0 {>
+
+# Shift right with overflow in only
+# output0 is (B>>1) + (A>0)*0x80
+:Shri
+}0 .. }1
+>0 80 >>
+&1 &1 ..
+\/ {1 //
+
+# Shift right with overflow in and out
+# output0 is (B>>1) + (A>0)*0x80
+# right output is A&1
+:Shro
+}0 .. }1 }1
+>0 80 >> ^0
+&1 &1 .. {>
+\/ {1 // ..
+
+# extract the nth bit from a byte
+# output0 is (A>>B)&1
+:Bitx
+}0 }0 }0 }0 }0 }0 }0 }0
+&0 &1 &2 &3 &4 &5 &6 &7
+^0 ^1 ^2 ^3 ^4 ^5 ^6 ^7
+{0 {0 {0 {0 {0 {0 {0 {0
+}1 }1 }1 }1 }1 }1 }1 }1
+=0 =1 =2 =3 =4 =5 =6 =7
+&0 &1 &2 &3 &4 &5 &6 &7
+
+# Bit difference
+# output0 is the number of bits differing between A and B
+# 0 indicates equality
+:Bdif
+.. }1 .. }1 .. }1 .. }1 .. }1 .. }1 .. }1 .. }1
+}0 ^0 }0 ^1 }0 ^2 }0 ^3 }0 ^4 }0 ^5 }0 ^6 }0 ^7
+^0 .. ^1 .. ^2 .. ^3 .. ^4 .. ^5 .. ^6 .. ^7 .. # separate 8 bits from each input
+\\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 # add bits together and check for sum==1
+.. \\ @0 // .. \\ @1 // .. \\ @2 // .. \\ @3 // # add the results together
+@0 .. .. ..
+.. @1 .. ..
+.. .. @2 ..
+.. .. .. @3
+{0 // // //
+
+# Bitwise OR
+# output0 is A|B
+:Borr
+}0 .. }0 .. }0 .. }0 .. ..
+.. }1 .. }1 .. }1 .. }1 ..
+^7 ^7 ^6 ^6 ^5 ^5 ^4 ^4 .. # separate bits of both inputs
+=1 =1 =1 =1 =1 =1 =1 =1 \/ # drop set bits
+&7 // &6 // &5 // &4 // .. # any set bit drops an output bit
+}0 .. }0 .. }0 .. }0 .. ..
+.. }1 .. }1 .. }1 .. }1 ..
+^3 ^3 ^2 ^2 ^1 ^1 ^0 ^0 .. # same as above
+=1 =1 =1 =1 =1 =1 =1 =1 ..
+&3 // &2 // &1 // &0 // ..
+80 40 20 10 08 04 02 01 {0 # output bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # drop output bits
+{0 {0 {0 {0 {0 {0 {0 {0 .. # sum and output dropped bits
+
+# Bitwise AND
+# output0 is A&B
+:Band
+}0 }0 }0 }0 }0 }0 }0 }0 ..
+^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0 .. # separate 8 bits of input 0
+=1 =1 =1 =1 =1 =1 =1 =1 \/ # check for set bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # maybe drop selected bits
+}1 }1 }1 }1 }1 }1 }1 }1 ..
+^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0 .. # separate 8 bits of input 1
+=1 =1 =1 =1 =1 =1 =1 =1 .. # check for set bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # maybe drop selected bits
+80 40 20 10 08 04 02 01 {0 # 8 single bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # drop output bits
+{0 {0 {0 {0 {0 {0 {0 {0 .. # sum and output dropped bits
+
+# Bitwise XOR
+# output0 is A^B
+:Bxor
+.. .. }1 .. }1 .. }1 .. }1 .. }1 .. }1 .. }1 .. }1
+00 }0 ^7 }0 ^6 }0 ^5 }0 ^4 }0 ^3 }0 ^2 }0 ^1 }0 ^0 # 00 is the default return
+.. ^7 .. ^6 .. ^5 .. ^4 .. ^3 .. ^2 .. ^1 .. ^0 .. # separate 8 bits from each input
+.. \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 \\ =1 # add bits together and check for sum==1
+.. .. &7 .. &6 .. &5 .. &4 .. &3 .. &2 .. &1 .. &0 # drop selected bits
+.. 80 40 20 10 08 04 02 01 # 8 single bits
+.. &7 &6 &5 &4 &3 &2 &1 &0 # drop output bits
+{0 {0 {0 {0 {0 {0 {0 {0 {0 # sum and output dropped bits
+
+# Bitwise NOR
+# output0 is ~(A|B)
+:Bnor
+}0 }0 }0 }0 }0 }0 }0 }0 ..
+^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0 .. # separate 8 bits of input 0
+=0 =0 =0 =0 =0 =0 =0 =0 \/ # check for unset bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # maybe drop selected bits
+}1 }1 }1 }1 }1 }1 }1 }1 ..
+^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0 .. # separate 8 bits of input 1
+=0 =0 =0 =0 =0 =0 =0 =0 .. # check for unset bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # maybe drop selected bits
+80 40 20 10 08 04 02 01 {0 # 8 single bits
+&7 &6 &5 &4 &3 &2 &1 &0 .. # drop output bits
+{0 {0 {0 {0 {0 {0 {0 {0 .. # sum and output dropped bits
+
+#include logical_operations.mbl
+#include hex_out.mbl
+#include bin_out.mbl
