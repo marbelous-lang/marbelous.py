@@ -71,7 +71,7 @@ Misc
 
 Comments in a board file begin with `#`
 
-Additional mbl files may be included with `#include file.mbl`, which ignores the main board in the included file.
+Additional mbl files may be included with `#include file.mbl`, which ignores the main board in the included file. The search path for included files is the mbl file directory, the current working directory, the lib directory under the current working directory, and the lib directory under the marbelous package.
 
 The interpreter has various levels of verbosity and different output behaviors, lightly explained in `marbelous.py --help`
 
@@ -128,4 +128,4 @@ Examples
     #   return A+B
 
 
-Additional examples are available in the [examples directory](https://github.com/marbelous-lang/marbelous.py/tree/master/examples).
+Additional examples are available in the [examples directory](https://github.com/marbelous-lang/marbelous.py/tree/master/examples) and [library directory](https://github.com/marbelous-lang/marbelous.py/tree/master/lib)
