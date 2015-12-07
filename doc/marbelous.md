@@ -50,6 +50,7 @@ Devices
 * `{<` and ...
 * `{>` are additional outputs which appear to the sides of the function device. If present, these need to be filled too, for the board to terminate. They have no effect on the main board.
 * `]]` reads one byte from stdin which falls, or outputs the input marble to the right
+* `[[` sends one byte to stdout immediately
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
 With the exception of `^n`, which has 8 variations, form `^0` to `^7`.

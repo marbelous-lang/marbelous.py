@@ -84,7 +84,8 @@ devices = set([
     '<<',
     '>>',
     '~~',
-    ']]'
+    ']]',
+    '[['
     ])
 # devices with variations for 36 constants
 for p in '=><-+?@&}{':
@@ -379,6 +380,9 @@ class Board:
                         else: # got a byte from stdin, drop that byte as a marble
                             m = ord(char)
                             d = 1
+                    elif i == '[[': # send to stdout
+                        #FIXME this shouldn't happen until after queued subboards process
+                        self.queue_stdout(y,x,chr(m))
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
                         s = int(i[1], 8)
                         d = 1
