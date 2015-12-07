@@ -10,7 +10,7 @@ Marbelous is a simulation of one or more discrete values ("marbles") moving betw
 
 After the initial board is defined, additional boards may be named and defined. Any board may be placed as a device on a board, called a "function". This is the only type of device that may be more than one cell wide. When the defined inputs for a function are filled, the board in question is queued to be run. The next time the parent board would tick, the sub-board ticks instead. The input marbles are transferred to the new board. The new board is run to completion within a single tick of its parent board. Finally the outputs, if any, of the function appear below or beside the function device. In practice, this means that appropriately built functions may precisely replicate the behavior of most predefined devices.
 
-Marbles are represented by a two digit hexadecimal number, uppercase, allowing values from 0 to 255 (0x00 to 0xFF). All mathematical operations in Marbelous are modulo 256. Devices are represented by two characters that are not a valid marble. Many predefined devices are described below. Function devices wider than one cell may have proportionally longer names. Empty space on the board may be considered to be a device that simply allows the marble to fall downwards.
+Marbles are represented by a two digit hexadecimal number, uppercase, allowing values from 0 to 255 (0x00 to 0xFF), or a single quote followed by an ascii character, representing the value of that character. All mathematical operations in Marbelous are modulo 256. Devices are represented by two characters that are not a valid marble. Many predefined devices are described below. Function devices wider than one cell may have proportionally longer names. Empty space on the board may be considered to be a device that simply allows the marble to fall downwards.
 
 A marbelous program is executed by repeatedly performing two alternating steps:
 1) All marbles undergo the actions specified by the device in their cell, and all functions execute if their inputs are filled.
@@ -50,6 +50,7 @@ Devices
 * `{<` and ...
 * `{>` are additional outputs which appear to the sides of the function device. If present, these need to be filled too, for the board to terminate. They have no effect on the main board.
 * `]]` reads one byte from stdin which falls, or outputs the input marble to the right
+* `[[` sends one byte to stdout immediately
 
 Any device whose defined name ends with "n" actually has 36 variations, from `_0` to `_Z`
 With the exception of `^n`, which has 8 variations, form `^0` to `^7`.
@@ -58,6 +59,8 @@ Functions
 ---------
 
 The number of inputs and outputs of a cell is implicitly determined by the distinct `}n` and `{n` used.
+
+A function board with no defined inputs takes one input marble to run, but does not use that marble internally.
 
 To use a board as a function, you write its name across max(1,I+1,O+1) horizontally adjacent cells. Where I is the highest input number used and O is the highest output number used (side outputs are not counted). If the board's name is not as long as its device width, the name is repeated.
 
@@ -68,7 +71,7 @@ Misc
 
 Comments in a board file begin with `#`
 
-Additional mbl files may be included with `#include file.mbl`, which ignores the main board in the included file.
+Additional mbl files may be included with `#include file.mbl`, which ignores the main board in the included file. The search path for included files is the mbl file directory, the current working directory, the lib directory under the current working directory, and the lib directory under the marbelous package.
 
 The interpreter has various levels of verbosity and different output behaviors, lightly explained in `marbelous.py --help`
 
@@ -125,4 +128,4 @@ Examples
     #   return A+B
 
 
-Additional examples are available in the [examples directory](https://github.com/marbelous-lang/marbelous.py/tree/master/examples).
+Additional examples are available in the [examples directory](https://github.com/marbelous-lang/marbelous.py/tree/master/examples) and [library directory](https://github.com/marbelous-lang/marbelous.py/tree/master/lib)

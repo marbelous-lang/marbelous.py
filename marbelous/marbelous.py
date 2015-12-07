@@ -84,7 +84,8 @@ devices = set([
     '<<',
     '>>',
     '~~',
-    ']]'
+    ']]',
+    '[['
     ])
 # devices with variations for 36 constants
 for p in '=><-+?@&}{':
@@ -198,6 +199,8 @@ class Board:
                     continue
                 elif b[0] in hex_digits and b[1] in hex_digits:
                     mbl[y][x] = int(b, 16)
+                elif b[0] == "'":
+                    mbl[y][x] = ord(b[1])
                 else:
                     dev[y][x] = b
                     if b[0] == '}' and b[1] in b36_digits:
@@ -227,6 +230,8 @@ class Board:
         if self.name != "MB" and (self.function_width*2) % len(self.name) != 0:
             sys.stderr.write("Board name " + str(self.name) + " not a divisor of width " + str(self.function_width) + '\n')
             exit(1)
+        if self.name != "MB" and len(self.inputs) == 0:
+            self.inputs[0] = None
 
     def find_functions(self):
         wide_function_names = dict([(b.name * (2 * b.function_width / len(b.name)), b.name) for b in boards.values()])
@@ -249,7 +254,7 @@ class Board:
         if len(self.inputs) <= options['memoize_width'] and not self.has_stdin and not self.has_stdout:
             self.memoizing_inputs = tuple(inputs.items())
         for input_num,value in inputs.iteritems():
-            if value is not None:
+            if value is not None and self.inputs[input_num] is not None:
                 for y, x in self.inputs[input_num]:
                     self.marbles[y][x] = value
 
@@ -375,6 +380,9 @@ class Board:
                         else: # got a byte from stdin, drop that byte as a marble
                             m = ord(char)
                             d = 1
+                    elif i == '[[': # send to stdout
+                        #FIXME this shouldn't happen until after queued subboards process
+                        self.queue_stdout(y,x,chr(m))
                     elif i[0] == '^' and i[1] in oct_digits:  # fetch a bit
                         s = int(i[1], 8)
                         d = 1
@@ -518,15 +526,29 @@ def load_mbl_file(filename,ignore_main=True):
             for line in f.readlines():
                 line = line.rstrip()
                 if len(line)>9 and line[0:9] == "#include ":
-                    script_dir = os.path.dirname(options['file'])
+                    # search for include files, in order:
+                    # 1. mbl file's directory
+                    # 2. working directory
+                    # 3. working directory /lib
+                    # 3. interpreter directory /lib
+                    include_dirs = {
+                        os.path.dirname(options['file']),
+                        os.getcwd(),
+                        os.path.join(os.getcwd(),'lib'),
+                        os.path.join(os.path.realpath(__file__),'lib'),
+                    }
                     include_file = line[9:]
-                    lines.extend(load_mbl_file(os.path.join(script_dir,include_file)))
+                    for dir in include_dirs:
+                        filename = os.path.join(dir,include_file)
+                        if os.path.isfile(filename):
+                            lines.extend(load_mbl_file(filename))
+                            break
                 if ignore_main and not main_skipped:
                     if len(line) > 0 and line[0] == ':':
                         main_skipped = True
                     else:
                         continue
-                if len(line)<2 or line[0] == '#':  # comment
+                if len(line) <2 or line[0] == '#':  # comment
                     continue
                 lines.append(line)
     return lines

@@ -1,5 +1,5 @@
 }0 }1
-Cm pr
+Ma xx
 Hp
 
 :Tf
@@ -107,6 +107,24 @@ Cm pr
 <2 +2
 ?0 {0
 {0 ..
+
+:Minn
+}0 }1
+Gr tr
+=0 &1
+&0 ..
+}0 }1
+&0 &1
+{0 {0
+
+:Maxx
+}0 }1
+Gr tr
+=0 &1
+&0 ..
+}0 }1
+&1 &0
+{0 {0
 
 #include hex_out.mbl
 #include bitwise_operations.mbl

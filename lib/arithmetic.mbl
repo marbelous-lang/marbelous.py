@@ -1,0 +1,93 @@
+# arithmetic.mbl
+# 8-bit arithmetic functions with optional one bit carry/borrow
+
+.. }0 }1 }2 0A
+.. Ad df ul ..
+Hp .. .. .. //
+.. Hp
+
+# Simple subtractor
+# output0 is A-B
+# no borrow in or out
+# cannot interact with adjacent subtractors
+# implemented as A + ~B + 1
+:Subt
+.. }1
+}0 ~~
+\\ ++
+.. {0
+
+# Half subtractor
+# output0 is A-B
+# left output is the borrow bit, B>A
+# can be the rightmost in a chain of subtractors
+:Subo
+.. }0 }1 ..
+.. Su bt }0
+{0 /\ Gr tr
+.. .. =1 ..
+.. .. {< //
+
+# Full subtractor
+# output0 is A-B-C
+# left output is the borrow value, (B>A) + ((B+C)>A)
+# can be chained together to handle multiple bytes of wide values
+:Subful
+.. }0 }1
+.. Su bo
+.. .. }2
+{< Su bo
+.. {0 ..
+
+# Simple adder
+# output0 is A+B
+# this function is superfluous, included only for completeness
+:Addd
+}0 ..
+.. }1
+{0 //
+
+# Half adder
+# output0 is A+B
+# left output is the carry bit, A+B>255
+# can be the rightmost in a chain of adders
+:Addo
+}1 .. }1 }0 }1
+.. }0 .. Ma xx
+{0 /\ Le ss ..
+.. .. {< .. ..
+
+# Full adder
+# output0 is A+B+C
+# left output is the carry value, ((A+B)>255) + ((A+B+C)>511)
+# can be chained together to handle multiple bytes of wide values
+:Addful
+.. }0 }1
+.. Ad do
+.. .. }2
+{< Ad do
+.. {0 ..
+
+# Multiply
+# output0 is A*B
+# implemented by masking out unset bits of B, adding together selected bit-shifted copies of A
+:Mult
+.. }1 }1 }1 }1 }1 }1 }1 }1
+00 ^7 ^6 ^5 ^4 ^3 ^2 ^1 ^0
+.. =1 =1 =1 =1 =1 =1 =1 =1
+.. &7 &6 &5 &4 &3 &2 &1 &0
+.. }0 .. .. .. .. .. .. ..
+.. &7 }0 .. .. .. .. .. ..
+.. << &6 }0 .. .. .. .. ..
+.. << << &5 }0 .. .. .. ..
+.. << << << &4 }0 .. .. ..
+.. << << << << &3 }0 .. ..
+.. << << << << << &2 }0 ..
+.. << << << << << << &1 }0
+.. << << << << << << << &0
+{0 // // // // // // // //
+
+# Multiply with a full 16-bit output is in wide_devices.mbl along with the other 16 and 32 bit operations
+
+#include hex_out.mbl
+#include logical_operations.mbl
