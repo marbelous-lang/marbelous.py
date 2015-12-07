@@ -526,15 +526,29 @@ def load_mbl_file(filename,ignore_main=True):
             for line in f.readlines():
                 line = line.rstrip()
                 if len(line)>9 and line[0:9] == "#include ":
-                    script_dir = os.path.dirname(options['file'])
+                    # search for include files, in order:
+                    # 1. mbl file's directory
+                    # 2. working directory
+                    # 3. working directory /lib
+                    # 3. interpreter directory /lib
+                    include_dirs = {
+                        os.path.dirname(options['file']),
+                        os.getcwd(),
+                        os.path.join(os.getcwd(),'lib'),
+                        os.path.join(os.path.realpath(__file__),'lib'),
+                    }
                     include_file = line[9:]
-                    lines.extend(load_mbl_file(os.path.join(script_dir,include_file)))
+                    for dir in include_dirs:
+                        filename = os.path.join(dir,include_file)
+                        if os.path.isfile(filename):
+                            lines.extend(load_mbl_file(filename))
+                            break
                 if ignore_main and not main_skipped:
                     if len(line) > 0 and line[0] == ':':
                         main_skipped = True
                     else:
                         continue
-                if len(line)<2 or line[0] == '#':  # comment
+                if len(line) <2 or line[0] == '#':  # comment
                     continue
                 lines.append(line)
     return lines
